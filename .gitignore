@@ -1,0 +1,6 @@
+Experiments/
+logs/
+**/*.sh
+**/*~
+**/*#
+**/__pycache__/
