@@ -25,7 +25,7 @@ p_to_trim      = args.to_trim
 # SETUP json dictionary
 index_to_label_dict = None
 with open(index_to_label, "r") as jf:
-    index_to_label_dict = json.load(jf);
+    index_to_label_dict = json.load(jf)
 
 label_to_index_dict = {}
 for key in index_to_label_dict:
@@ -49,7 +49,7 @@ for ed in adjGraph:
 l2_distances = sorted(l2_distances,
                       key = lambda x : x[2])[ : int((1 - p_to_trim) * len(adjGraph))]
 
-str_to_wr = "";
+str_to_wr = ""
 for e in l2_distances:
     n1, n2, d, w = e
     str_to_wr   += "{} {} {}\n".format(n1, n2, w)
