@@ -1,9 +1,5 @@
 import numpy as np
-
-import sys
-sys.path.append("../")
-from Utils.graph_operations import densify
-
+from .graph_operations import densify
 
 def get_chi_ij(i, j, size):
     """

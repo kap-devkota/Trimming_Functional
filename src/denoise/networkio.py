@@ -52,9 +52,3 @@ def parse_dream_network_file(fname):
             node_list[index] = name
 
         return G, node_list, node_map
-
-"""
-Start with the identity for now.
-"""
-def denoise(g):
-    return g
