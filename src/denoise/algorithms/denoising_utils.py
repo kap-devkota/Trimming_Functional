@@ -1,7 +1,5 @@
-import sys
-
-from dsd.graph_operations import get_graph_from_file, densify
-from dsd.dse_computations import compute_degree_mat, compute_laplacian, compute_X_normalized
+from .dsd.graph_operations import get_graph_from_file, densify
+from .dsd.dse_computations import compute_degree_mat, compute_laplacian, compute_X_normalized
 
 
 def parse_and_annotate(filename):
