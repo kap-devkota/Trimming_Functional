@@ -1,14 +1,12 @@
-import networkit as nk
 import numpy as np
 
-"""
-Parses a GO label file.
-
-Outputs two dicts:
- - One associating GO labels to proteins
- - One associating proteins to GO labels
-"""
 def parse_go_label_file(fname):
+    """Parses a GO label file.
+
+    Outputs two dicts:
+    - One associating GO labels to proteins
+    - One associating proteins to GO labels
+    """
     with open(fname, "r") as f:
         rows = f.readlines()
         go_to_proteins = {}
@@ -25,28 +23,32 @@ def parse_go_label_file(fname):
 
         return go_to_proteins, proteins_to_go
 
-"""
-Parses a DREAM network file.
+def parse_graph_file(fname):
+    """Parses a graph represented as an adjacency list. Works on either
+    directed or undirected graphs.
 
-Outputs a triple:
-  - A weighted graph G
-  - A list mapping node indices to names
-  - A dictionary from node names to node indices
-"""
-def parse_dream_network_file(fname):
+    Outputs a triple:
+    - An edge list for the weighted graph G
+    - A list mapping node indices to names
+    - A dictionary from node names to node indices
+    """
     with open(fname, "r") as f:
-        G, node_map = nk.Graph(weighted=True), {}
+        G, node_map = [], {}
+
+        counter = 0
         edges = f.readlines()
         for edge in edges:
             edge = edge.split()
             u, v, weight = edge[0], edge[1], float(edge[2])
-            if u not in node_map:
-                node_map[u] = G.addNode()
-            if v not in node_map:
-                node_map[v] = G.addNode()
-            G.addEdge(node_map[u], node_map[v], weight)
 
-        n, m = G.size
+            for x in [u, v]:
+                if x not in node_map:
+                    node_map[x] = counter
+                    counter += 1
+
+            G.append((node_map[u], node_map[v], weight))
+
+        n, m = len(node_map), len(G)
         node_list = np.empty(n, dtype=object)
         for name, index in node_map.items():
             node_list[index] = name

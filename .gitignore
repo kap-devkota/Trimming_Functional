@@ -1,4 +1,5 @@
 Experiments/
+data/dream_files/*
 logs/
 **/*.sh
 **/*~
