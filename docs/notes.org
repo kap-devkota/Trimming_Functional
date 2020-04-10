@@ -36,11 +36,3 @@ is we then set $W = 1/2(P + P^T)$
 * Notes
 We are using the link prediction embedding to add new links and then
 do FP on the new network.
-  
-Kapil - one of the things that will make your code in its current
-state hard to work with is the fact that you have the actual "meat" of
-everything stored in "Utils" and then a bunch of one-off scripts that
-each perform there own little tasks. I know that this is somewhat
-necessary due to the fact that we want to run our code on the cluster,
-but I think there is a better way. At the very least, we must rename
-Utils as they are the core algorithms and not just little utilities.

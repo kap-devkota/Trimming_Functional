@@ -28,12 +28,12 @@ def parse_graph_file(fname):
     directed or undirected graphs.
 
     Outputs a triple:
-    - An edge list for the weighted graph G
+    - An edgelist for the weighted graph G
     - A list mapping node indices to names
-    - A dictionary from node names to node indices
+    - A dictionary mapping node names to node indices
     """
     with open(fname, "r") as f:
-        G, node_map = [], {}
+        edgelist, node_map = [], {}
 
         counter = 0
         edges = f.readlines()
@@ -46,11 +46,31 @@ def parse_graph_file(fname):
                     node_map[x] = counter
                     counter += 1
 
-            G.append((node_map[u], node_map[v], weight))
+            edgelist.append((node_map[u], node_map[v], weight))
 
         n, m = len(node_map), len(G)
         node_list = np.empty(n, dtype=object)
         for name, index in node_map.items():
             node_list[index] = name
 
-        return G, node_list, node_map
+        return edgelist, node_list, node_map
+
+def write_graph_to_file(filename, edgelist, node_map=None):
+    """Given an output filename and a list of edges, writes the contents
+    of the list to the file.
+    """
+    list_str = ""
+    for edge in lst:
+        p, q, wt = edge
+        if node_map is not None:
+            p = node_map[p]
+            q = node_map[q]
+            
+        e_str = str(p) + " " + str(q) + " " + str(wt) + "\n"
+        list_str += e_str
+
+    list_str = list_str.lstrip().rstrip()
+    
+    with open(filename, "w") as fp:
+        fp.write(list_str)
+

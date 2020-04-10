@@ -1,74 +1,12 @@
 import numpy as np
 import json
 
-def get_graph_from_file(filename, weighted = True, no_lines = None, discard_flips = True):
-    """
-    this function takes in a filename containing list of edges of the form:
-
-    VERTEX1 VERTEX2 WT
-    VERTEX3 VERTEX4 WT'
-    ..................
-
-    and returns the list of edges of form `list[(VERTEX1, VERTEX2, WT), ...]`
-    """
-    A_list = []
-
-    A_dict = {}
-    
-    with open(filename, "r") as fp:
-        count = 0
-
-        for line in fp:
-
-            if no_lines is not None:
-                if count >= no_lines:
-                    break
-            
-            count += 1
-
-            line = line.lstrip().rstrip().split()
-            if weighted:
-                p1, p2, wt = line
-                wt = float(wt)
-            else:
-                p1, p2 = line
-
-            if (discard_flips == True):
-                if (p1, p2) in A_dict or (p2, p1) in A_dict:
-                    continue
-                else:
-                    A_dict[(p1, p2)] = True
-                
-            if weighted:
-                A_list.append((p1, p2, wt))
-            else:
-                A_list.append((p1, p2))
-
-    return A_list
-
-
-def write_to_file(filename, lst):
-    """
-    Given a output filename and a list of edges, writes the contents of the list to the file.
-    """
-    list_str = ""
-    for edge in lst:
-        p, q, wt = edge
-        e_str = str(p) + " " + str(q) + " " + str(wt) + "\n"
-        list_str += e_str
-
-    list_str = list_str.lstrip().rstrip()
-    
-    with open(filename, "w") as fp:
-        fp.write(list_str)
-
-
-def sparsify(A, is_directed = False):
-    """
-    Given an adjacency matrix as a numpy matrix, returns the sparsified form of the matrix (or adjacency list).
+def sparsify(A, directed = False):
+    """Given an adjacency matrix as a numpy matrix, returns the
+    sparsified form of the matrix (or adjacency list).
     """
     dim = A.shape[0]
-    spA = []
+    edgelist = []
     for i in range(dim):
         for j in range(i + 1):
             
@@ -76,23 +14,40 @@ def sparsify(A, is_directed = False):
                 continue
 
             if A[i, j] != 0:
-                spA.append((i, j, A[i, j]))
+                edgelist.append((i, j, A[i, j]))
 
-            if is_directed:
+            if directed:
                 if A[j, i] != 0:
-                    spA.append((j, i, A[j, i]))
+                    edgelist.append((j, i, A[j, i]))
     
-    return spA, dim
+    return edgelist, dim
 
-
-def get_dim(spA):
+def densify(edgelist, dim = None, directed = False):
     """
-    Given a adjacency list, returns the number of nodes in the edge.
+    Given an adjacency list for the graph, computes the adjacency matrix
+    """
+    if dim is None:
+        dim = get_dim(edgelist)
+
+    A = np.zeros((dim, dim))
+    
+    for edge in edgelist:
+        p, q, wt = edge
+        A[p, q] = wt
+
+        if not directed:
+            A[q, p] = wt
+
+    return A
+
+def get_dim(edgelist):
+    """Given an adjacency list for a graph, returns the number of nodes in
+    the graph.
     """
     node_dict = {}
     node_count = 0
 
-    for edge in spA:
+    for edge in edgelist:
         p, q = edge[ :2]
 
         if p not in node_dict:
@@ -105,58 +60,37 @@ def get_dim(spA):
 
     return node_count
 
-
-def densify(spA, dim = None, directed = False):
+def add_random_numbering(edgelist):
+    """Adds a random number to each of the edges in the adjacency list,
+    for randomization.
     """
-    Given an adjacency list for the graph, computes the adjacency matrix
-    """
-    if dim is None:
-        dim = get_dim(spA)
-
-    A = np.zeros((dim, dim))
-    
-    for edge in spA:
-        p, q, wt = edge
-        A[p, q] = wt
-
-        if not directed:
-            A[q, p] = wt
-
-    return A
-
-
-def add_random_numbering(spA):
-    """
-    Adds a random number to each of the edges in the adjacency list, for randomization.
-    """
-    no_edges = len(spA)
+    no_edges = len(edgelist)
     perm = np.random.permutation(no_edges)
-    _spA = []
+    _edgelist = []
     for i in range(no_edges):
-        _spA.append((spA[i][0], spA[i][1], spA[i][2], perm[i]))
+        _edgelist.append((edgelist[i][0], edgelist[i][1], edgelist[i][2], perm[i]))
 
-    return _spA
-       
+    return _edgelist
 
-def compute_reduced_graph(spA, dims = None, p_reduced = 0.1):
-    """
-    Given an adjacency list `spA`, splits `spA` into two. One of the subgraph should be connected, have all the
-    nodes in `spA` and should contain `(1 - p_reduced) * spA` number of edges.
+def compute_reduced_graph(edgelist, dims = None, p_reduced = 0.1):
+    """Given an adjacency list `edgelist`, splits `edgelist` into two. One of the
+    subgraph should be connected, have all the nodes in `edgelist` and
+    should contain `(1 - p_reduced) * edgelist` number of edges.
     """
     if dims == None:
-        _spA = add_random_numbering(spA)
+        _edgelist = add_random_numbering(edgelist)
 
-    no_edges = len(spA)
+    no_edges = len(edgelist)
     node_dict = {}
     nodes_added = 0
 
     rA = []
 
-    _spA = sorted(_spA, key = lambda x: x[3])
+    _edgelist = sorted(_edgelist, key = lambda x: x[3])
 
     # Automatically add the first edge
 
-    p, q, weight, _ = _spA[0]
+    p, q, weight, _ = _edgelist[0]
     rA.append((p, q, weight))
 
     node_dict[p] = True
@@ -165,20 +99,20 @@ def compute_reduced_graph(spA, dims = None, p_reduced = 0.1):
     extras = []
 
     # Remove the first element
-    _spA = _spA[1: ]
+    _edgelist = _edgelist[1: ]
 
     refresh = 0
     connected = True
 
-    while (len(_spA) != 0):
+    while (len(_edgelist) != 0):
         
-        elem = _spA.pop(0)
+        elem = _edgelist.pop(0)
         p, q, wt, _ = elem
 
         if p not in node_dict and q not in node_dict:
-            _spA.append(elem)
+            _edgelist.append(elem)
             refresh += 1
-            if refresh >= len(_spA):
+            if refresh >= len(_edgelist):
                 connected = False
                 break
         else:
@@ -211,36 +145,35 @@ def compute_reduced_graph(spA, dims = None, p_reduced = 0.1):
 
     return rA, rrA
 
-
-def get_connected_components(spA):
+def get_connected_components(edgelist):
+    """This function takes in an adjacency list and returns one of the
+    connected components from the list
     """
-    This function takes in an adjacency list and returns one of the connected components from the list
-    """
-    _spA = add_random_numbering(spA)
+    _edgelist = add_random_numbering(edgelist)
     node_dict = {}
     nodes_added = 0
 
     cc = []
-    _spA = sorted(_spA, key = lambda x: x[3])
+    _edgelist = sorted(_edgelist, key = lambda x: x[3])
 
     # Automatically add the first edge
-    p, q, weight, _ = _spA[0]
+    p, q, weight, _ = _edgelist[0]
     cc.append((p, q, weight))
     node_dict[p] = True
     node_dict[q] = True
     nodes_added = 2
 
     # Remove the first element
-    _spA = _spA[1: ]
+    _edgelist = _edgelist[1: ]
     refresh = 0
 
-    while (len(_spA) != 0):
-        elem = _spA.pop(0)
+    while (len(_edgelist) != 0):
+        elem = _edgelist.pop(0)
         p, q, wt, _ = elem
         if p not in node_dict and q not in node_dict:
-            _spA.append(elem)
+            _edgelist.append(elem)
             refresh += 1
-            if refresh >= len(_spA):
+            if refresh >= len(_edgelist):
                 break
         else:
             refresh = 0
@@ -254,20 +187,20 @@ def get_connected_components(spA):
     return cc
         
 
-def compute_graph_reduced_nodes(spA, no_nodes):
+def compute_graph_reduced_nodes(edgelist, no_nodes):
     """
     Given an adjacency list, returns a connected subgraph from the adjacency list containing all the edge 
     connections, with randomly selected nodes of size `no_nodes`.
     """
-    _spA = add_random_numbering(spA)
-    no_edges = len(spA)
+    _edgelist = add_random_numbering(edgelist)
+    no_edges = len(edgelist)
     node_dict = {}
     nodes_added = 0
     rA = []
-    _spA = sorted(_spA, key = lambda x: x[3])
+    _edgelist = sorted(_edgelist, key = lambda x: x[3])
 
     # Automatically add the first edge
-    p, q, weight, _ = _spA[0]
+    p, q, weight, _ = _edgelist[0]
     rA.append((p, q, weight))
 
     node_dict[p] = True
@@ -276,17 +209,17 @@ def compute_graph_reduced_nodes(spA, no_nodes):
     extras = []
 
     # Remove the first element
-    _spA = _spA[1: ]
+    _edgelist = _edgelist[1: ]
     refresh = 0
-    while (len(_spA) != 0):
-        elem = _spA.pop(0)
+    while (len(_edgelist) != 0):
+        elem = _edgelist.pop(0)
         p, q, wt, _ = elem
         
         if nodes_added < no_nodes:
             if p not in node_dict and q not in node_dict:
-                _spA.append(elem)
+                _edgelist.append(elem)
                 refresh += 1
-                if refresh >= len(_spA):
+                if refresh >= len(_edgelist):
                     break
             elif p in node_dict and q not in node_dict:
                 rA.append((p, q, wt))
@@ -307,14 +240,14 @@ def compute_graph_reduced_nodes(spA, no_nodes):
     return rA
 
 
-def compute_clustering_coeff(spA):
+def compute_clustering_coeff(edgelist):
     """
     Create a datastructure that is a dictionary of dictionaries, indexed by node label, and uses it to compute the 
     clustering coeffecient.
     """
     edge_dict = {}
     node_dict = {}    
-    for e in spA:
+    for e in edgelist:
         p, q, wt = e
         if p == q:
             continue
