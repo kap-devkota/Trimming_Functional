@@ -1,5 +1,4 @@
 import sys
-sys.path.add("dsd/")
 
 from dsd.graph_operations import get_graph_from_file, densify
 from dsd.dse_computations import compute_degree_mat, compute_laplacian, compute_X_normalized
