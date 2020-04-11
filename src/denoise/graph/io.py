@@ -48,7 +48,7 @@ def parse_graph_file(fname):
 
             edgelist.append((node_map[u], node_map[v], weight))
 
-        n, m = len(node_map), len(G)
+        n, m = len(node_map), len(edgelist)
         node_list = np.empty(n, dtype=object)
         for name, index in node_map.items():
             node_list[index] = name

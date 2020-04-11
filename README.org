@@ -29,7 +29,6 @@ The project has a few dependencies:
   - matplotlib
   - scipy
   - numpy
-  - networkit
   - pandas
  
 The easiest way to set this all up is with conda, which you can
@@ -40,7 +39,6 @@ commands:
 conda create --name denoise # Creates a new conda environment named denoise
 conda activate denoise # Activates the environment
 conda install jupyterlab matplotlib scipy numpy pandas # Installs packages into environment
-conda install -c conda-forge networkit 
 #+END_SRC
 
 ** Running project locally 

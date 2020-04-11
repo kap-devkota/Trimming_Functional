@@ -23,8 +23,8 @@ def sparsify(A, directed = False):
     return edgelist, dim
 
 def densify(edgelist, dim = None, directed = False):
-    """
-    Given an adjacency list for the graph, computes the adjacency matrix
+    """Given an adjacency list for the graph, computes the adjacency
+    matrix.
     """
     if dim is None:
         dim = get_dim(edgelist)
@@ -241,9 +241,9 @@ def compute_graph_reduced_nodes(edgelist, no_nodes):
 
 
 def compute_clustering_coeff(edgelist):
-    """
-    Create a datastructure that is a dictionary of dictionaries, indexed by node label, and uses it to compute the 
-    clustering coeffecient.
+    """Create a datastructure that is a dictionary of dictionaries,
+    indexed by node label, and uses it to compute the clustering
+    coeffecient.
     """
     edge_dict = {}
     node_dict = {}    
@@ -293,9 +293,7 @@ def compute_clustering_coeff(edgelist):
                     
     return c_coeff / n_deg_2
                 
-########################################## DIAMETER CALCULATION ###########################################
-
-
+############################DIAMETER CALCULATION#######################################
 def compute_shortest_separation(adjacency_dict, node, computed_dict = None):
     """
     Takes in an adjacency dict, which is a dictionary of dictionaries, a node as a key to the dict
@@ -332,12 +330,10 @@ def compute_shortest_separation(adjacency_dict, node, computed_dict = None):
 
     return return_dict
 
-
 def compute_graph_separation_dict(adjacency_dict):
-    """
-    Given a dictionary that represents two nodes with edges between them, returns the dictionary whose key 
-    is the tuple of two nodes, and 
-    the value is the distance between nodes. 
+    """Given a dictionary that represents two nodes with edges between
+    them, returns the dictionary whose key is the tuple of two nodes,
+    and the value is the distance between nodes.
     """
     nodes = list(adjacency_dict.keys())
 
@@ -351,11 +347,10 @@ def compute_graph_separation_dict(adjacency_dict):
 
     return computed_dict
 
-
 def convert_to_adjacency_dict(edge_connections):
-    """
-    Given an edge list, returns the adjacency dict `adict` where `adict[p][q]` is true if p and q are nodes 
-    and p and q have edges between them.
+    """Given an edge list, returns the adjacency dict `adict` where
+    `adict[p][q]` is true if p and q are nodes and p and q have edges
+    between them.
     """
     adjacency_dict = {}
     
@@ -372,7 +367,6 @@ def convert_to_adjacency_dict(edge_connections):
         adjacency_dict[e2][e1] = True
 
     return adjacency_dict
-
 
 def compute_graph_distances(edge_connections):
     adjdict = convert_to_adjacency_dict(edge_connections)

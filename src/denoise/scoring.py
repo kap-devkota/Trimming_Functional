@@ -1,11 +1,10 @@
 import random
 
-"""
-Scores cross validation by counting the
-number of test nodes that were accurately labeled
-after their removal from the true labelling.
-"""
 def score_cv(test_nodes, test_labelling, real_labelling):
+    """Scores cross validation by counting the number of test nodes that
+    were accurately labeled after their removal from the true
+    labelling.
+    """
     correct = 0
     total = 0
     for node in test_nodes:
@@ -19,21 +18,19 @@ def score_cv(test_nodes, test_labelling, real_labelling):
 
     return float(correct) / float(total)
 
-"""
-Performs k-fold cross validation.
-
-Input:
-  - A number of folds k
-  - A labelling for the nodes.
-  - An algorithm that takes the training labels
-    and outputs a predicted labelling.
-
-Output:
-  - A list of accuracies where each element
-    is the accuracy of the learning algorithm holding
-    out one fold of the data.
-"""
 def kfoldcv(k, labels, prediction_algorithm, randomized=False):
+    """Performs k-fold cross validation.
+
+    Input:
+      - A number of folds k
+      - A labeling for the nodes.
+      - An algorithm that takes the training labels
+      and outputs a predicted labelling.
+
+    Output: 
+      - A list where each element is the accuracy of the
+      learning algorithm holding out one fold of the data.
+    """
     nodes = list(labels.keys())
     if randomized:
         random.shuffle(nodes)
