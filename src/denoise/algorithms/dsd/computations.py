@@ -51,3 +51,14 @@ def compute_embedding(edge_list, lm = 1):
     D     = compute_degree_mat(A)
     X     = compute_X_normalized(A, D, lm = lm)
     return X
+
+def compute_adjacency_matrix(embedding_mat, meth="rbf", params):
+    prod    = embedding_mat @ embedding_mat.T
+    diag    = np.diag(prod).reshape(-1, 1)
+    e       = np.ones(diag.shape)
+    Diag    = diag @ e.T + e @ diag.T
+    l2_     = Diag - 2 * prod
+    if meth == "rbf":
+        rbf   = np.exp(-1 / (2 * params["rbf"] ** 2) l2_)
+    return rbf
+    
