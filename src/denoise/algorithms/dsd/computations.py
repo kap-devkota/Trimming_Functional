@@ -53,6 +53,13 @@ def compute_embedding(edge_list, lm = 1):
     return X
 
 def compute_adjacency_matrix(embedding_mat, meth="rbf", params):
+    """
+    Given a embedding matrix, returns the similarity matrix
+    @param embedding_mat -> A  (nxn) numpy matrix containing embedding
+    @param meth          -> A  method by which the similarity metric computed
+                            Currently only rbf kernel implemented
+    @param params        -> parameters required for @meth
+    """
     prod    = embedding_mat @ embedding_mat.T
     diag    = np.diag(prod).reshape(-1, 1)
     e       = np.ones(diag.shape)
