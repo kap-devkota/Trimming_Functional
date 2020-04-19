@@ -19,7 +19,7 @@ def compute_pinverse_diagonal(diag):
 
     return i_diag
 
-def compute_X_normalized(A, D, t, lm = 1, is_normalized = True):
+def compute_X_normalized(A, D, t = -1, lm = 1, is_normalized = True):
     D_i = compute_pinverse_diagonal(D)
     P = np.matmul(D_i, A)
     Identity = np.identity(A.shape[0])
@@ -52,20 +52,22 @@ def compute_embedding(edge_list, lm = 1):
     X     = compute_X_normalized(A, D, lm = lm)
     return X
 
-def compute_adjacency_matrix(embedding_mat, meth="rbf", params):
+def compute_sim_matrix(embedding_mat, meth="rbf", params = None):
     """
     Given a embedding matrix, returns the similarity matrix
     @param embedding_mat -> A  (nxn) numpy matrix containing embedding
     @param meth          -> A  method by which the similarity metric computed
                             Currently only rbf kernel implemented
     @param params        -> parameters required for @meth
+    @return sim          -> Similarity matrix computed from the embedding
     """
     prod    = embedding_mat @ embedding_mat.T
     diag    = np.diag(prod).reshape(-1, 1)
     e       = np.ones(diag.shape)
     Diag    = diag @ e.T + e @ diag.T
     l2_     = Diag - 2 * prod
+    sim     = None
     if meth == "rbf":
-        rbf   = np.exp(-1 / (2 * params["rbf"] ** 2) l2_)
-    return rbf
-    
+        sim = np.exp(-1 / (2 * params["rbf"] ** 2) * l2_)
+    return sim
+

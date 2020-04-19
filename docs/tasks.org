@@ -32,3 +32,6 @@ GO_LABEL2 PROTEIN1 PROTEIN2 PROTEIN3 ..
 ** TODO Create a program that takes in a graph, embedding -> functional labelling
    Does this based on the l2 distance induced by the embedding. DSD
    embedding. [[https://github.com/kap-devkota/Trimming_Functional/blob/master/src/Utils/dse_computations.py][Embedding Code]]: DSD embedding compute_X_normalized(...).
+*** DONE : Created a program that takes in graph, produces embedding and returns the similarity matrix. Example in `DREAM Network Testbench`
+
+** TODO (Henri) Added the embedding and similarity matrix producing code in `DREAM Network Testbench` notebook. Need to compute a    function that takes in similarity matrix and produces a function label score.
