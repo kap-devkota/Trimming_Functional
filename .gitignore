@@ -1,3 +1,4 @@
+notebooks/.ipynb_checkpoints/*
 Experiments/
 data/dream_files/*
 logs/
