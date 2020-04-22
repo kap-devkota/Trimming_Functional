@@ -46,12 +46,6 @@ def compute_X_normalized(A, D, t = -1, lm = 1, is_normalized = True):
 
     return np.matmul(X_i, SS)
 
-def compute_embedding(edge_list, lm = 1):
-    A     = densify(edge_list)
-    D     = compute_degree_mat(A)
-    X     = compute_X_normalized(A, D, lm = lm)
-    return X
-
 def compute_sim_matrix(embedding_mat, meth="rbf", params = None):
     """
     Given a embedding matrix, returns the similarity matrix
@@ -70,4 +64,12 @@ def compute_sim_matrix(embedding_mat, meth="rbf", params = None):
     if meth == "rbf":
         sim = np.exp(-1 / (2 * params["rbf"] ** 2) * l2_)
     return sim
+
+# TODO: This function feels out of place. It doesn't do anything
+# interesting and clutters the codebase.
+def compute_embedding(edge_list, lm = 1):
+    A     = densify(edge_list)
+    D     = compute_degree_mat(A)
+    X     = compute_X_normalized(A, D, lm = lm)
+    return X
 
