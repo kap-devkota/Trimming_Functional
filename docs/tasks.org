@@ -1,4 +1,4 @@
-* TODO Project Plan :: DREAM function prediction pipeline [80%]
+* TODO Project Plan :: DREAM function prediction pipeline [60%]
 ** DONE Parse DREAM networks
    - DREAM networks consist of adjacency lists with proteins listed as
      nodes.
@@ -29,9 +29,28 @@ GO_LABEL2 PROTEIN1 PROTEIN2 PROTEIN3 ..
 ** DONE Implement scoring strategy
 *** DONE k-fold cross validation algorithm
 
-** TODO Create a program that takes in a graph, embedding -> functional labelling
+** DONE Create a program that takes in a graph, embedding -> functional labelling
    Does this based on the l2 distance induced by the embedding. DSD
    embedding. [[https://github.com/kap-devkota/Trimming_Functional/blob/master/src/Utils/dse_computations.py][Embedding Code]]: DSD embedding compute_X_normalized(...).
 *** DONE : Created a program that takes in graph, produces embedding and returns the similarity matrix. Example in `DREAM Network Testbench`
 
-** TODO (Henri) Added the embedding and similarity matrix producing code in `DREAM Network Testbench` notebook. Need to compute a    function that takes in similarity matrix and produces a function label score.
+** DONE (Henri) Added the embedding and similarity matrix producing code in `DREAM Network Testbench` notebook. Need to compute a    function that takes in similarity matrix and produces a function label score.
+** TODO (Henri) Test function prediction against the network enhancement
+** TODO (Henri/Kapil) Set up SLURM repository for collaboration
+What I would like is a repository somewhere on the cluster that is
+extremely organized for all of our slurm scripts/python scripts that
+test various parameters. It should *not* have any core code (like your
+GLIDE method).
+
+There should be top-level module that imports all of our code and then
+we can use that in all of our one-off python scripts. Then, there
+should be a place for the SLURM code that calls the python scripts.
+
+For the data directory, it would be useful to have some sort of
+organization so things don't become too chaotic. Maybe a README
+in each directory describing what everything is. Also for
+very temporary stuff we can use a /temp directory
+** TODO (Henri) Try different voting methods (KNN, WMV)
+** TODO (Henri) Try other kernels besides RBF kernel
+** TODO (Kapil) Create small datasets for us to work on.
+** TODO (Kapil) Write up GLIDE code.
