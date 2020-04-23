@@ -39,6 +39,15 @@ def glide_predict_links(edgelist, X, params={})
     of a graph.
     Returns a ranked list of (edges, distances) sorted from closest to 
     furthest.
+    @param edgelist -> A list with elements of type `(p, q, wt)`
+    @param X        -> A nxk embedding matrix
+    @param params   -> A dictionary with entries 
+    {
+    alpha => real number
+    beta  => real number
+    delta => real number
+    loc   => String, can be `cw` for common weighted, `l3` for l3 local scoring
+    }
     """
     def create_edge_dict(edgelist):
         """
@@ -113,7 +122,6 @@ def glide_predict_links(edgelist, X, params={})
                 k_e2    = len(ndict[e2])
                 score  += a_p_e1 * a_p_e2 * a_e1_e2 / np.sqrt(k_e1 * k_e2)
         return score
-
     edgedict      = compute_edge_dict(edgelist)
     ndict         = compute_neighborhood_dict(edgelist)
 
@@ -124,7 +132,6 @@ def glide_predict_links(edgelist, X, params={})
     beta          = params["beta"]
     delta         = params["delta"]
     local_metric  = params["loc"]
-
     edgelist_with_scores = []
     for i in range(N):
         for j in range(i):
