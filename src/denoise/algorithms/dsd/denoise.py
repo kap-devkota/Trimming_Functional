@@ -55,8 +55,7 @@ def glide_predict_links(edgelist, X, params={}):
         @return edgedict -> A dictionary with key `(p, q)` and value `w`.
         """
         edgedict             = {}
-        for ed in edgelist:
-            p, q, w          = ed
+        for (p, q, w) in edgelist:
             edgedict[(p, q)] = w
         return edgedict
     
@@ -69,10 +68,10 @@ def glide_predict_links(edgelist, X, params={}):
         ndict                = {}
         for ed in edgelist:
             p, q, _          = ed
-            if p not in n_dict:
-                ndict[p]     = {}
-            if q not in n_dict:
-                ndict[q]     = {}
+            if p not in ndict:
+                ndict[p]     = set()
+            if q not in ndict:
+                ndict[q]     = set()
             ndict[p].add(q)
             ndict[q].add(p)
         return ndict
@@ -98,7 +97,7 @@ def glide_predict_links(edgelist, X, params={}):
                 score  += p_elem + q_elem
         return score
 
-    def compute_l3_score(p, q, edgedict, ndict, nlist):
+    def compute_l3_score(p, q, edgedict, ndict):
         """
         Compute the l3 score between p and q
             L3 metric proposed by \citet{kovacs2019network} is computed as 
@@ -112,8 +111,8 @@ def glide_predict_links(edgelist, X, params={}):
         @return         -> A real value representing the score
         """
         score = 0
-        for e1 in nlist:
-            for e2 in nlist:
+        for e1 in ndict[p]:
+            for e2 in ndict[q]:
                 a_p_e1  = 1 if ((p, e1)  in edgedict or (e1, p)  in edgedict) else 0
                 a_p_e2  = 1 if ((p, e2)  in edgedict or (e2, p)  in edgedict) else 0
                 a_e1_e2 = 1 if ((e1, e2) in edgedict or (e2, e1) in edgedict) else 0
@@ -121,8 +120,9 @@ def glide_predict_links(edgelist, X, params={}):
                 k_e2    = len(ndict[e2])
                 score  += a_p_e1 * a_p_e2 * a_e1_e2 / np.sqrt(k_e1 * k_e2)
         return score
-    edgedict      = compute_edge_dict(edgelist)
-    ndict         = compute_neighborhood_dict(edgelist)
+
+    edgedict      = create_edge_dict(edgelist)
+    ndict         = create_neighborhood_dict(edgelist)
 
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
@@ -131,18 +131,21 @@ def glide_predict_links(edgelist, X, params={}):
     beta          = params["beta"]
     delta         = params["delta"]
     local_metric  = params["loc"]
+
+    if local_metric == "l3":
+        local_metric = compute_l3_score
+    elif local_metric == "cw":
+        local_metric = compute_cw_score
+    else:
+        raise Exception("[x] The local scoring metric is not available.")
+
     edgelist_with_scores = []
     for i in range(N):
         for j in range(i):
-            if local_metric == "l3":
-                local_score  = compute_l3_score(i, j, edgedict, ndict)
-            elif local_metric == "cw":
-                local_score  = compute_cw_score(i, j, edgedict, ndict)
-            else:
-                raise Exception("[x] The local scoring metric is not available.")
-            dsed_dist        = pairwise_dist[i, j]
-            glide_score      = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
+            local_score = local_metric(i, j, edgedict, ndict)
+            dsed_dist   = pairwise_dist[i, j]
+            glide_score = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
                                 + delta * 1 / dsed_dist)
             edgelist_with_scores.append((i, j, glide_score))
-    return sorted(edgelist_with_scores, reversed = True, key = lambda l : l[2])    
+    return sorted(edgelist_with_scores, key = lambda l : l[2])    
     

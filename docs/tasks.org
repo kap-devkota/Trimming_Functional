@@ -1,4 +1,4 @@
-* TODO Project Plan :: DREAM function prediction pipeline [75%]
+* TODO Project Plan :: DREAM function prediction pipeline [83%]
 ** DONE Parse DREAM networks
    - DREAM networks consist of adjacency lists with proteins listed as
      nodes.
@@ -35,7 +35,7 @@ GO_LABEL2 PROTEIN1 PROTEIN2 PROTEIN3 ..
 *** DONE : Created a program that takes in graph, produces embedding and returns the similarity matrix. Example in `DREAM Network Testbench`
 
 ** DONE (Henri) Added the embedding and similarity matrix producing code in `DREAM Network Testbench` notebook. Need to compute a    function that takes in similarity matrix and produces a function label score.
-** TODO (Henri) Test function prediction against the network enhancement
+** TODO (Henri) Test function prediction against the network enhancement algorithm
 ** TODO (Henri/Kapil) Set up SLURM repository for collaboration
 What I would like is a repository somewhere on the cluster that is
 extremely organized for all of our slurm scripts/python scripts that
@@ -51,6 +51,7 @@ organization so things don't become too chaotic. Maybe a README
 in each directory describing what everything is. Also for
 very temporary stuff we can use a /temp directory
 ** DONE (Henri) Try different voting methods (KNN, WMV)
-** TODO (Henri) Try other kernels besides RBF kernel
+** DONE (Henri) Try other kernels besides RBF kernel
+   Don't waste time tinkering with continuous kernels.
 ** DONE (Kapil) Create small datasets for us to work on.
 ** DONE (Kapil) Write up GLIDE code.
