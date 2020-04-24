@@ -32,7 +32,7 @@ def predict_links(X, metric="euclidean"):
     edges_and_distances.sort(key=lambda x: x[1])
     return edges_and_distances
 
-def glide_predict_links(edgelist, X, params={})
+def glide_predict_links(edgelist, X, params={}):
     """Predicts the most likely links in a graph given an embedding X
     of a graph.
 

@@ -1,7 +1,6 @@
 import itertools
 import multiprocessing as mp
 import numpy as np
-import scipy.spatial.distance as spatial
 from collections import defaultdict
 
 def vote(voters, labels_f, weight_f):
@@ -48,7 +47,7 @@ def wmv(A, labels_f, default_label="????"):
             predicted_labels[i] = labels[0]
             continue
         voters = filter(lambda j: A[i, j] != 0, itertools.chain(range(0, i), range(i + 1, n)))
-        weight_f = lambda voter: A[node, voter]
+        weight_f = lambda voter: A[i, voter]
         prediction = vote(voters, labels_f, weight_f)
         if prediction is not None:
             predicted_labels[i] = prediction
@@ -57,23 +56,22 @@ def wmv(A, labels_f, default_label="????"):
 
     return predicted_labels
 
-def knn(X, labels_f, k, metric="euclidean", default_label="????"):
+def knn(distances, labels_f, k, default_label="????"):
     """Performs k-nearest neighors voting algorithm using the passed in
-    distance metric.
+    distance matrix.
 
     Input:
-      - An embedding matrix where each row corresponds to point.
+      - An n x n matrix where each entry represents the distance
+      between two points.
       - A function mapping node IDs to a list of labels. An
       empty list represents no known label.
       - A label to give when no label is predicted
     Output:
       - A dictionary mapping node IDs to a label. If the label
       is already known, the first label in the list is picked."""
-
-    distances = spatial.squareform(spatial.pdist(X, metric=metric))
     predicted_labels = {}
 
-    n = X.shape[0] # number of nodes
+    n = distances.shape[0] # number of nodes
     for i in range(n):
         labels = labels_f(i)
         if labels:
