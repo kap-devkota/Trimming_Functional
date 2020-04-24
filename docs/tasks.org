@@ -1,4 +1,4 @@
-* TODO Project Plan :: DREAM function prediction pipeline [58%]
+* TODO Project Plan :: DREAM function prediction pipeline [75%]
 ** DONE Parse DREAM networks
    - DREAM networks consist of adjacency lists with proteins listed as
      nodes.
@@ -52,5 +52,5 @@ in each directory describing what everything is. Also for
 very temporary stuff we can use a /temp directory
 ** DONE (Henri) Try different voting methods (KNN, WMV)
 ** TODO (Henri) Try other kernels besides RBF kernel
-** TODO (Kapil) Create small datasets for us to work on.
-** TODO (Kapil) Write up GLIDE code.
+** DONE (Kapil) Create small datasets for us to work on.
+** DONE (Kapil) Write up GLIDE code.
