@@ -32,10 +32,8 @@ def predict_links(X, metric="euclidean"):
     edges_and_distances.sort(key=lambda x: x[1])
     return edges_and_distances
 
-
-def glide_predict_links(edgelist, X, params={})
-    """
-    Predicts the most likely links in a graph given an embedding X
+def glide_predict_links(edgelist, X, params={}):
+    """Predicts the most likely links in a graph given an embedding X
     of a graph.
     Returns a ranked list of (edges, distances) sorted from closest to 
     furthest.
@@ -49,6 +47,7 @@ def glide_predict_links(edgelist, X, params={})
     loc   => String, can be `cw` for common weighted, `l3` for l3 local scoring
     }
     """
+
     def create_edge_dict(edgelist):
         """
         Creates an edge dictionary with the edge `(p, q)` as the key, and weight `w` as the value.
