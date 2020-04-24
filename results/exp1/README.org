@@ -1,3 +1,6 @@
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \usepackage[margin=1in]{geometry}
+
 * Setup
 This experiment tested the results of running two function prediction
 methods (WMV and KNN after embedding) on the DREAM3 network after
@@ -8,9 +11,20 @@ embedding and then pairwise distance was used to rank the edges. The
 GLIDE method was ran as specified by Kapil with the parameters 
 set as follows:
 
-#+BEGIN_SRC python
+#+BEGIN_EXPORT latex
+\begin{minted}[mathescape, 
+               xleftmargin=2pt, 
+               xrightmargin=2pt, 
+               style=autumn, 
+               framesep=3mm,
+               frame=lines
+               ]{python}
 params = {"alpha" : 1, "beta" : 1000, "delta" : 0.001, "loc" : "l3"}
-#+END_SRC
+
+def foo(a):
+  pass
+\end{minted}
+#+END_EXPORT
 
 For both link prediction methods, the top 10% of edges were added to
 the network with a weight of 1.
