@@ -32,11 +32,118 @@ def predict_links(X, metric="euclidean"):
     edges_and_distances.sort(key=lambda x: x[1])
     return edges_and_distances
 
-def glide_predict_links(edgelist, X, params={})
-    """Predicts the most likely links in a graph given an embedding X
-    of a graph.
 
+def glide_predict_links(edgelist, X, params={})
+    """
+    Predicts the most likely links in a graph given an embedding X
+    of a graph.
     Returns a ranked list of (edges, distances) sorted from closest to 
     furthest.
+    @param edgelist -> A list with elements of type `(p, q, wt)`
+    @param X        -> A nxk embedding matrix
+    @param params   -> A dictionary with entries 
+    {
+    alpha => real number
+    beta  => real number
+    delta => real number
+    loc   => String, can be `cw` for common weighted, `l3` for l3 local scoring
+    }
     """
-    pass
+    def create_edge_dict(edgelist):
+        """
+        Creates an edge dictionary with the edge `(p, q)` as the key, and weight `w` as the value.
+        @param  edgelist -> A list with elements of form `(p, q, w)`
+        @return edgedict -> A dictionary with key `(p, q)` and value `w`.
+        """
+        edgedict             = {}
+        for ed in edgelist:
+            p, q, w          = ed
+            edgedict[(p, q)] = w
+        return edgedict
+    
+    def create_neighborhood_dict(edgelist):
+        """
+        Create a dictionary with nodes as key and a list of neighborhood nodes as the value
+        @param edgelist          -> A list with elements of form `(p, q, w)`
+        @param neighborhood_dict -> A dictionary with key `p` and value, a set `{p1, p2, p3, ...}`
+        """
+        ndict                = {}
+        for ed in edgelist:
+            p, q, _          = ed
+            if p not in n_dict:
+                ndict[p]     = {}
+            if q not in n_dict:
+                ndict[q]     = {}
+            ndict[p].add(q)
+            ndict[q].add(p)
+        return ndict
+
+    def compute_cw_score(p, q, edgedict, ndict):
+        """
+        Computes the common weighted score between p and q
+        @param p        -> A node of the graph
+        @param q        -> Another node in the graph
+        @param edgedict -> A dictionary with key `(p, q)` and value `w`.
+        @param ndict    -> A dictionary with key `p` and the value a set `{p1, p2, ...}`
+        @return         -> A real value representing the score
+        """
+        if (len(ndict[p]) > len(ndict[q])):
+            temp  = p
+            p     = q
+            q     = temp            
+        score     = 0
+        for elem in ndict[p]:
+            if elem in ndict[q]:
+                p_elem  = edgedict[(p, elem)] if (p, elem) in edgedict else edgedict[(elem, p)]
+                q_elem  = edgedict[(q, elem)] if (q, elem) in edgedict else edgedict[(elem, q)]
+                score  += p_elem + q_elem
+        return score
+
+    def compute_l3_score(p, q, edgedict, ndict, nlist):
+        """
+        Compute the l3 score between p and q
+            L3 metric proposed by \citet{kovacs2019network} is computed as 
+            $\displaystyle{L3(p,q) = \sum_{u,v} \frac{a_{p,u}\cdot a_{u,v}\cdot a_{v,q}}{\sqrt{k_u k_v}}},$ 
+            where $u$ and $v$ represent all distinct pair of nodes in $G$. Here, $a_{m,n} = 1$ if there is a 
+            link between nodes $m,n\in G$, and $k_m$ represents the degree of the node $m$.
+        @param p        -> A node of the graph
+        @param q        -> Another node in the graph
+        @param edgedict -> A dictionary with key `(p, q)` and value `w`.
+        @param ndict    -> A dictionary with key `p` and the value a set `{p1, p2, ...}`
+        @return         -> A real value representing the score
+        """
+        score = 0
+        for e1 in nlist:
+            for e2 in nlist:
+                a_p_e1  = 1 if ((p, e1)  in edgedict or (e1, p)  in edgedict) else 0
+                a_p_e2  = 1 if ((p, e2)  in edgedict or (e2, p)  in edgedict) else 0
+                a_e1_e2 = 1 if ((e1, e2) in edgedict or (e2, e1) in edgedict) else 0
+                k_e1    = len(ndict[e1])
+                k_e2    = len(ndict[e2])
+                score  += a_p_e1 * a_p_e2 * a_e1_e2 / np.sqrt(k_e1 * k_e2)
+        return score
+    edgedict      = compute_edge_dict(edgelist)
+    ndict         = compute_neighborhood_dict(edgelist)
+
+    # Embedding
+    pairwise_dist = spatial.squareform(spatial.pdist(X))
+    N             = X.shape[0]
+    alpha         = params["alpha"]
+    beta          = params["beta"]
+    delta         = params["delta"]
+    local_metric  = params["loc"]
+    edgelist_with_scores = []
+    for i in range(N):
+        for j in range(i):
+            if local_metric == "l3":
+                local_score  = compute_l3_score(i, j, edgedict, ndict)
+            elif local_metric == "cw":
+                local_score  = compute_cw_score(i, j, edgedict, ndict)
+            else:
+                raise Exception("[x] The local scoring metric is not available.")
+            dsed_dist        = pairwise_dist[i, j]
+            glide_score      = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
+                                + delta * 1 / dsed_dist)
+            edgelist_with_scores.append((i, j, glide_score))
+    return sorted(edgelist_with_scores, reversed = True, key = lambda l : l[2])    
+    
