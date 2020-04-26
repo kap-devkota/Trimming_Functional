@@ -147,5 +147,5 @@ def glide_predict_links(edgelist, X, params={}):
             glide_score = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
                                 + delta * 1 / dsed_dist)
             edgelist_with_scores.append((i, j, glide_score))
-    return sorted(edgelist_with_scores, key = lambda l : l[2])    
+    return sorted(edgelist_with_scores, key = lambda l : l[2], reverse = True)    
     
