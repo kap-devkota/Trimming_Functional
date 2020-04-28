@@ -1,5 +1,6 @@
 **/_minted*
 **/_minted*/*
+**/*.tex
 notebooks/.ipynb_checkpoints/*
 Experiments/
 data/dream_files/*
