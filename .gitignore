@@ -1,3 +1,4 @@
+**/*.html
 **/_minted*
 **/_minted*/*
 **/*.tex
@@ -8,4 +9,5 @@ logs/
 **/*.sh
 **/*~
 **/*#
+**/__pycache__/*
 **/__pycache__/
