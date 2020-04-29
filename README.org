@@ -1,3 +1,6 @@
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \usepackage[margin=1in]{geometry}
+
 * High-Level Description of Project
 
 The high-level goal of our project is to build an algorithm to ~reduce
