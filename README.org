@@ -1,3 +1,6 @@
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \usepackage[margin=1in]{geometry}
+
 * High-Level Description of Project
 
 The high-level goal of our project is to build an algorithm to ~reduce
@@ -35,20 +38,36 @@ The easiest way to set this all up is with conda, which you can
 install through miniconda or anaconda. Then, run the following
 commands:
 
-#+BEGIN_SRC sh
+#+BEGIN_EXPORT latex
+\begin{minted}[mathescape, 
+xleftmargin=2pt, 
+xrightmargin=2pt, 
+style=autumn, 
+framesep=3mm,
+frame=lines
+]{sh}
 conda create --name denoise # Creates a new conda environment named denoise
 conda activate denoise # Activates the environment
 conda install jupyterlab matplotlib scipy numpy pandas # Installs packages into environment
-#+END_SRC
+\end{minted}
+#+END_EXPORT
 
 ** Running project locally 
 For running Jupyter notebook locally, start at the root of the directory
 of the project and run the following commands:
 
-#+BEGIN_SRC sh
+#+BEGIN_EXPORT latex
+\begin{minted}[mathescape, 
+xleftmargin=2pt, 
+xrightmargin=2pt, 
+style=autumn, 
+framesep=3mm,
+frame=lines
+]{sh}
 conda activate denoise # Activates environment with jupyter notebook
 jupyter notebook # Runs notebook locally
-#+END_SRC
+\end{minted}
+#+END_EXPORT
 
 Everything should now work as expected!
 
@@ -59,8 +78,34 @@ tunnel to forward the notebook to your laptop.
 
 [[https://amber-md.github.io/pytraj/latest/tutorials/remote_jupyter_notebook][Jupyter notebook remote tutorial]]
 
-#+BEGIN_SRC sh
+#+BEGIN_EXPORT latex
+\begin{minted}[mathescape, 
+xleftmargin=2pt, 
+xrightmargin=2pt, 
+style=autumn, 
+framesep=3mm,
+frame=lines
+]{sh}
 ssh -N -f -L localhost:[LOCAL]:localhost:[REMOTE] username@your_remote_host_name
 ssh -N -f -L localhost:8888:localhost:4000 hschmi02@login.cluster.tufts.edu
-#+END_SRC 
- 
+\end{minted}
+#+END_EXPORT
+
+* Using as a Python package
+The conda environment ~denoise~ contains the python package, so it
+should be as easy as activating the environment to use the code. To
+update the package, run the following commands:
+#+BEGIN_EXPORT latex
+\begin{minted}[mathescape, 
+xleftmargin=2pt, 
+xrightmargin=2pt, 
+style=autumn, 
+framesep=3mm,
+frame=lines
+]{sh}
+git pull
+source activate denoise
+pip install .
+\end{minted}
+#+END_EXPORT
+

@@ -1,5 +1,7 @@
+**/*.html
 **/_minted*
 **/_minted*/*
+**/*.tex
 notebooks/.ipynb_checkpoints/*
 Experiments/
 data/dream_files/*
@@ -7,4 +9,5 @@ logs/
 **/*.sh
 **/*~
 **/*#
+**/__pycache__/*
 **/__pycache__/
