@@ -21,7 +21,7 @@ def score_cv(test_nodes, test_labelling, real_labelling):
 def kfoldcv(k, labels, prediction_algorithm, randomized=False):
     """Performs k-fold cross validation.
 
-    Input:
+    Args:
       - A number of folds k
       - A labeling for the nodes.
       - An algorithm that takes the training labels
