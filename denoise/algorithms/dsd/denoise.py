@@ -113,12 +113,10 @@ def glide_predict_links(edgelist, X, params={}):
         score = 0
         for e1 in ndict[p]:
             for e2 in ndict[q]:
-                a_p_e1  = 1 if ((p, e1)  in edgedict or (e1, p)  in edgedict) else 0
-                a_p_e2  = 1 if ((p, e2)  in edgedict or (e2, p)  in edgedict) else 0
                 a_e1_e2 = 1 if ((e1, e2) in edgedict or (e2, e1) in edgedict) else 0
                 k_e1    = len(ndict[e1])
                 k_e2    = len(ndict[e2])
-                score  += a_p_e1 * a_p_e2 * a_e1_e2 / np.sqrt(k_e1 * k_e2)
+                score  += a_e1_e2 / np.sqrt(k_e1 * k_e2)
         return score
 
     edgedict      = create_edge_dict(edgelist)
@@ -128,8 +126,6 @@ def glide_predict_links(edgelist, X, params={}):
     pairwise_dist = spatial.squareform(spatial.pdist(X))
     N             = X.shape[0]
     alpha         = params["alpha"]
-    beta          = params["beta"]
-    delta         = params["delta"]
     local_metric  = params["loc"]
 
     if local_metric == "l3":
