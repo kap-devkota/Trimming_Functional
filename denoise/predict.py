@@ -33,8 +33,8 @@ def wmv(A, labels_f, weight_f=lambda x: x, default_label="????"):
       - An adjacency matrix for a graph.
       - A function mapping node IDs to a list of labels. An
       empty list represents no known label.
-      - A label to give when no label is predicted
       - A function mapping weights to new values. 
+      - A label to give when no label is predicted
     Output:
       - A dictionary mapping node IDs to a label. If the label
       is already known, the first label in the list is picked.
