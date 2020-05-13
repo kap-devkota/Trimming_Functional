@@ -5,6 +5,7 @@ from numpy.linalg  import norm
 import numpy as np
 import itertools
 import scipy.spatial.distance as spatial
+import ctypes
 
 def rank_edges(edgelist, X):
     """Ranks the edges in the edgelist according to their L2 distance from
@@ -47,7 +48,6 @@ def glide_predict_links(edgelist, X, params={}):
     loc   => String, can be `cw` for common weighted, `l3` for l3 local scoring
     }
     """
-
     def create_edge_dict(edgelist):
         """
         Creates an edge dictionary with the edge `(p, q)` as the key, and weight `w` as the value.
@@ -76,7 +76,7 @@ def glide_predict_links(edgelist, X, params={}):
             ndict[q].add(p)
         return ndict
 
-    def compute_cw_score(p, q, edgedict, ndict):
+    def compute_cw_score(p, q, edgedict, ndict, params = None):
         """
         Computes the common weighted score between p and q
         @param p        -> A node of the graph
@@ -97,7 +97,63 @@ def glide_predict_links(edgelist, X, params={}):
                 score  += p_elem + q_elem
         return score
 
-    def compute_l3_score(p, q, edgedict, ndict):
+################################################################################################### CTYPES CODE ###################################################################################################
+
+    def convert_to_ctypes_suitable(edge_dict, ndict):
+        """
+        """
+        params = {}
+        no_nodes = len(ndict)
+        emat     = np.zeros((no_nodes, no_nodes), dtype = np.double)
+        degmat   = np.zeros((no_nodes, ), dtype = np.intc)
+        n_dct    = {}
+        for ed in edge_dict:
+            p, q = ed
+            p    = int(p)
+            q    = int(q)
+            emat[p, q] = edge_dict[ed]
+            emat[q, p] = edge_dict[ed]
+        for key in ndict:
+            p        = int(key)
+            deg      = len(ndict[key])
+            degmat[p]= deg
+            n_dct[p] = np.zeros((deg, ), dtype = np.intc)
+            count = 0
+            for k in ndict[key]:
+                n_dct[p][count] = int(k)
+                count          += 1
+        params["degree_vector"] = degmat
+        params["edge_matrix"]   = emat
+        params["neighbors"]     = n_dct
+        return params
+        
+    
+    def compute_l3_score_ctypes(p, q, edgedict, ndict, params):
+        # Here edgedict and ndict are unused
+        p           = int(p)
+        q           = int(q)
+        lib         = params["lib"]
+        p_neighbors = params["neighbors"][p]
+        q_neighbors = params["neighbors"][q]
+        size_pn     = p_neighbors.shape[0]
+        size_qn     = q_neighbors.shape[0]
+        edge_mat    = params["edge_matrix"]
+        degrees     = params["degree_vector"]
+        no_nodes    = degrees.shape[0]
+        out         = np.array([0], dtype = np.double)
+        lib.compute_l3_score(ctypes.c_void_p(p_neighbors.ctypes.data),
+                             ctypes.c_void_p(q_neighbors.ctypes.data),
+                             ctypes.c_int(size_pn),
+                             ctypes.c_int(size_qn),
+                             ctypes.c_void_p(edge_mat.ctypes.data),
+                             ctypes.c_void_p(degrees.ctypes.data),
+                             ctypes.c_int(no_nodes),
+                             ctypes.c_void_p(out.ctypes.data))
+        return out[0]
+        
+################################################################################################### CTYPES CODE END ###################################################################################################
+
+    def compute_l3_score(p, q, edgedict, ndict, params = None):
         """
         Compute the l3 score between p and q
             L3 metric proposed by \citet{kovacs2019network} is computed as 
@@ -122,16 +178,24 @@ def glide_predict_links(edgelist, X, params={}):
     edgedict      = create_edge_dict(edgelist)
     ndict         = create_neighborhood_dict(edgelist)
 
+    ctypes_params = None
+    if "ctypes_on" in params:
+        ctypes_params        = convert_to_ctypes_suitable(edgedict, ndict)
+        ctypes_params["lib"] = ctypes.CDLL(params["so_location"])
+        
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
     N             = X.shape[0]
     alpha         = params["alpha"]
+    local_metric  = params["loc"]
     beta          = params["beta"]
     delta         = params["delta"]
-    local_metric  = params["loc"]
-
+    
     if local_metric == "l3":
-        local_metric = compute_l3_score
+        if "ctypes_on" in params:
+            local_metric = compute_l3_score_ctypes
+        else:
+            local_metric = compute_l3_score
     elif local_metric == "cw":
         local_metric = compute_cw_score
     else:
@@ -140,7 +204,7 @@ def glide_predict_links(edgelist, X, params={}):
     edgelist_with_scores = []
     for i in range(N):
         for j in range(i):
-            local_score = local_metric(i, j, edgedict, ndict)
+            local_score = local_metric(i, j, edgedict, ndict, ctypes_params)
             dsed_dist   = pairwise_dist[i, j]
             glide_score = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
                                 + delta * 1 / dsed_dist)
