@@ -242,9 +242,7 @@ def glide_predict_links(edgelist, X, params={}):
     ctypes_params = None
     if "ctypes_on" in params:
         ctypes_params        = convert_to_ctypes_suitable(edgedict, ndict)
-        print("Reached here!")
         ctypes_params["lib"] = ctypes.CDLL(params["so_location"])   
-    print("Here here!")
         
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
