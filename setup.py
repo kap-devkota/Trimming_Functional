@@ -1,7 +1,4 @@
-from setuptools import setup, find_packages, Extension
-
-module1 = Extension("libl3",
-                   sources=["l3.c"])
+from setuptools import setup, find_packages
 
 setup(
     name='denoise',
@@ -10,6 +7,5 @@ setup(
     author='Henri Schmidt and Kapil Devkota',
     author_email='henri.schmidt@tufts.edu',
     url='https://github.com/kap-devkota/Trimming_Functional',
-    packages=find_packages(exclude=('tests', 'docs', 'results', 'data')),
-    ext_modules=[module1]
+    packages=find_packages(exclude=('tests', 'docs', 'results', 'data'))
 )
