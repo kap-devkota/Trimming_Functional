@@ -72,7 +72,6 @@ def geometric_reweight(new_edges, params):
                          If spacing = 10, the same weight appled to the 10 
                          consecutive edges, before a linear operation is 
                          applied.
-        "scale"       => > 0
         "factor"      => > 1
                          ; If scale is 2 and factor is 4, after k update,
                          ; the new weight becomes `new_weight` = 2 * `max` * 1 / (4)^k 
@@ -88,7 +87,6 @@ def geometric_reweight(new_edges, params):
         spacing = int(spacing)
         if (spacing < 1):
             spacing = 1
-        scale   = params["scale"]
         factor  = params["factor"]
         min_w   = params["min_weight"]
     except:
@@ -98,7 +96,7 @@ def geometric_reweight(new_edges, params):
     for ed in new_edges:
         p, q, _ = ed
         if (curr_w > min_w) and (count % spacing == 0):
-            curr_w = scale * curr_w / (factor)
+            curr_w = curr_w / (factor)
         ret_list.append((p, q, curr_w))
         count   += 1
     return ret_list        

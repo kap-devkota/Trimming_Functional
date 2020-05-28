@@ -212,9 +212,31 @@ def glide_predict_links(edgelist, X, params={}):
                              ctypes.c_int(no_nodes),
                              ctypes.c_void_p(out.ctypes.data))
         return out[0]
-        
+    
 ############################################## CTYPES CODE END ##############################################
+    def compute_l3_unweighted_mat(A):
+        A_u  = np.where(A>0, 1, 0)
+        d, _ = A_u.shape 
+        e    = np.ones((d, 1))
+        deg  = A_u @ e
+        ideg = np.where(deg > 0, 1 / deg, 0)
+        sdeg = np.diag(np.sqrt(ideg).flatten())
+        A1   = sdeg @ A_u @ sdeg
+        return A_u @ A1 @ A_u
 
+    def compute_l3_weighted_mat(A):
+        d, _ = A.shape
+        e    = np.ones((d, 1))
+        deg  = A @ e
+        ideg = np.where(deg > 0, 1 / deg, 0)
+        sdeg = np.diag(np.sqrt(ideg).flatten())
+        A1   = sdeg @ A @ sdeg
+        return A @ A1 @ A
+
+    def compute_l3_score_mat(p, q, edgedict, ndict, params = None):
+        L3 = params["l3"]
+        return L3[p, q]
+    
     def compute_l3_score(p, q, edgedict, ndict, params = None):
         """
         Compute the l3 score between p and q
@@ -239,10 +261,12 @@ def glide_predict_links(edgelist, X, params={}):
     
     edgedict      = create_edge_dict(edgelist)
     ndict         = create_neighborhood_dict(edgelist)
-    ctypes_params = None
+    params_ = None
     if "ctypes_on" in params:
-        ctypes_params        = convert_to_ctypes_suitable(edgedict, ndict)
-        ctypes_params["lib"] = ctypes.CDLL(params["so_location"])   
+        params_        = convert_to_ctypes_suitable(edgedict, ndict)
+        params_["lib"] = ctypes.CDLL(params["so_location"])   
+    else:
+        params_        = {}
         
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
@@ -251,8 +275,18 @@ def glide_predict_links(edgelist, X, params={}):
     local_metric  = params["loc"]
     beta          = params["beta"]
     delta         = params["delta"]
-    
-    if local_metric == "l3":
+
+    if local_metric == "l3_u":
+        A         = densify(edgelist)
+        L3        = compute_l3_unweighted_mat(A)
+        params_["l3"] = L3
+        local_metric  = compute_l3_score_mat  
+    elif local_metric == "l3_w":
+        A         = densify(edgelist)
+        L3        = compute_l3_weighted_mat(A)
+        params_["l3"] = L3
+        local_metric  = compute_l3_score_mat  
+    elif local_metric == "l3":
         if "ctypes_on" in params:
             local_metric = compute_l3_score_ctypes
         else:
@@ -267,7 +301,7 @@ def glide_predict_links(edgelist, X, params={}):
     edgelist_with_scores = []
     for i in range(N):
         for j in range(i):
-            local_score = local_metric(i, j, edgedict, ndict, ctypes_params)
+            local_score = local_metric(i, j, edgedict, ndict, params_)
             dsed_dist   = pairwise_dist[i, j]
             glide_score = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
                                 + delta * 1 / dsed_dist)

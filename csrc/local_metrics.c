@@ -25,7 +25,6 @@ void compute_l3_score(const void * p_neighbors,
     }
   }
   op[0] = score;
-  printf("Score : %f", score);  
   return;
 }
 
