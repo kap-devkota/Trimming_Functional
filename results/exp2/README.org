@@ -50,3 +50,35 @@ The accuracy for each method is listed below:
 | Average |          0.143 |    0.137 |    0.135 |               0.161 |        0.146 |
 
 * Conclusion
+  Immediately we see that in every case, our algorithm performs worse
+  than the network enhancement method. This should not surprise us. NE
+  is tailored to the task of denoising networks, whereas our algorithm
+  is not intelligent about how it adds new edges to the network. That
+  is, we do a dumb thing and still get a good result in many cases.
+
+  In the case of DREAM networks 3, 5, and 6 we improve the performance
+  of FP against that of the raw network, whereas in the remaining
+  networks the performance degrades. I believe this is mainly due to
+  the stupid weighting scheme we employ. In DREAM 1, edges have
+  weights $w \in [0, 1]$, so when our denoising algorithm adds edges
+  with weight 1, it is making too bold of claim about those edges
+  importance. This is similarly the case with DREAM networks 2 and 4
+  and is what I think results in poor performance.
+  
+  In contrast, the weights in DREAM 3 are positive integers and in
+  DREAM 6 are in the set $[1, 100]$. So it make sense that predicting
+  many low confidence edges would improve performance in these
+  networks. The one outlier is DREAM 5. Performance does slightly
+  improve, but weights are in the set $[0, 1]$. It seems strange, but
+  upon looking closely at the network one sees that most weights are
+  close to 1 and that performance barely improves.
+  
+  This is a hopeful result to see so early on in experimentation. Even
+  with an extremely stupid weighting denoising algorithm, performance
+  is greatly improved in some cases. I think that if we employ
+  something even slightly more intelligent such as average or min-edge
+  weighting, performance will increase significantly.
+
+
+
+  
