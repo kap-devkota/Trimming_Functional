@@ -78,7 +78,3 @@ The accuracy for each method is listed below:
   is greatly improved in some cases. I think that if we employ
   something even slightly more intelligent such as average or min-edge
   weighting, performance will increase significantly.
-
-
-
-  
