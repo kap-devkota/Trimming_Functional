@@ -29,7 +29,7 @@ def densify(edgelist, dim = None, directed = False):
     if dim is None:
         dim = get_dim(edgelist)
 
-    A = np.zeros((dim, dim))
+    A = np.zeros((dim, dim), dtype = np.double)
     
     for edge in edgelist:
         p, q, wt = edge

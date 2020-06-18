@@ -104,6 +104,29 @@ def glide_predict_links(edgelist, X, params={}):
                 score  += p_elem + q_elem
         return score
 
+    def compute_cw_score_normalized(p, q, edgedict, ndict, params = None):
+        """
+        Computes the common weighted normalized score between p and q
+        @param p        -> A node of the graph
+        @param q        -> Another node in the graph
+        @param edgedict -> A dictionary with key `(p, q)` and value `w`.
+        @param ndict    -> A dictionary with key `p` and the value a set `{p1, p2, ...}`
+        @param params   -> Should always be none here
+        @return         -> A real value representing the score
+        """
+        if (len(ndict[p]) > len(ndict[q])):
+            temp  = p
+            p     = q
+            q     = temp            
+        score     = 0
+        for elem in ndict[p]:
+            if elem in ndict[q]:
+                p_elem  = edgedict[(p, elem)] if (p, elem) in edgedict else edgedict[(elem, p)]
+                q_elem  = edgedict[(q, elem)] if (q, elem) in edgedict else edgedict[(elem, q)]
+                score  += p_elem + q_elem
+        degrees  = params["deg"]
+        return score / np.sqrt(degrees[p] * degrees[q])
+        
 ################################################## CTYPES CODE ##################################################
 
     def convert_to_ctypes_suitable(edge_dict, ndict):
@@ -149,7 +172,12 @@ def glide_predict_links(edgelist, X, params={}):
         params["edge_matrix"]   = emat
         params["neighbors"]     = n_dct
         return params
-        
+
+    def compute_degree_vec(edgelist):
+        A   = densify(edgelist)
+        e   = np.ones((A.shape[0], 1))
+        deg = A @ e
+        return deg.flatten()
     
     def compute_cw_score_ctypes(p, q, edgedict, ndict, params):
         """
@@ -222,17 +250,15 @@ def glide_predict_links(edgelist, X, params={}):
         ideg = np.where(deg > 0, 1 / deg, 0)
         sdeg = np.diag(np.sqrt(ideg).flatten())
         A1   = sdeg @ A_u @ sdeg
-        return A_u @ A1 @ A_u
-
+        
     def compute_l3_weighted_mat(A):
         d, _ = A.shape
         e    = np.ones((d, 1))
         deg  = A @ e
         ideg = np.where(deg > 0, 1 / deg, 0)
         sdeg = np.diag(np.sqrt(ideg).flatten())
-        A1   = sdeg @ A @ sdeg
-        return A @ A1 @ A
-
+        A1   = sdeg @ A @ sdeg        
+        
     def compute_l3_score_mat(p, q, edgedict, ndict, params = None):
         L3 = params["l3"]
         return L3[p, q]
@@ -296,8 +322,12 @@ def glide_predict_links(edgelist, X, params={}):
             local_metric = compute_cw_score_ctypes
         else:
             local_metric = compute_cw_score
+    elif local_metric == "cw_normalized":
+        params_["deg"]  = compute_degree_vec(edgelist)
+        local_metric    = compute_cw_score_normalized
     else:
         raise Exception("[x] The local scoring metric is not available.")
+    
     edgelist_with_scores = []
     for i in range(N):
         for j in range(i):
