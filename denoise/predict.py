@@ -93,7 +93,7 @@ def knn(distances, labels_f, k, default_label="????"):
             continue
 
         voters = np.argsort(distances[i, :])[1:k+1]
-        weight_f = lambda voter: 1 / distances[voter, i]
+        weight_f = lambda voter: 1 / (distances[voter, i] if distances[voter, i] > 0 else 0.000001)
         prediction = vote(voters, labels_f, weight_f)
         if prediction is not None:
             predicted_labels[i] = prediction
