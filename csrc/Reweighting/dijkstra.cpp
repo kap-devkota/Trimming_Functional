@@ -6,6 +6,10 @@
 #include <bits/stdc++.h>
 #include "dijkstra.h"
 
+/*
+  @param q         <int> : Id of the neighbor node `q`
+  @param weight <double> : Weight of `p` and `q`
+*/
 struct N_Info {
   int q;
   double weight;
@@ -19,28 +23,48 @@ struct N_Info {
   }
 };
 
+/*
+  @param p             <int> : Id of the node in the network
+  @param degree        <int> : degree of the node `p`
+  @param neighbors <N_Info*> : Information about the neighbours of `p` 
+*/
 struct Neighbors {
   int p;
   int degree;
   N_Info* neighbors;
 };
 
+/*
+  @param no_nodes         <int> : Number of nodes in the network
+  @param no_edges         <int> : Number of edges in the network
+  @param neighbors <Neighbors*> : All the nodes in the networks and their neighbors
+*/
 struct Graph {
   int no_nodes;
   int no_edges;
   Neighbors* neighbors;
 };
 
+/*
+  Function that, given a graph `g` and a id of `source` node, returns the predicted distance
+  from `source` to all the other nodes in `g`.
+  @param g     <Graph *> : A graph `g`
+  @param source    <int> : A source node
+  @return pred <double*> : Predicted weight from source to all the other nodes in the network
+*/
 double* Graph_predict_source_weights_dijkstra(Graph * g,
 					      int source) {
   int* prev     = new int[g->no_nodes];
   bool* traced  = new bool[g->no_nodes];
   double* pred  = new double[g->no_nodes];
   std::queue<int> to_check;
+
+  /* Take all the node connected to the source and assign them
+     a default weight value */
   for(int i = 0; i < g->no_nodes; i ++) {
     if(i == source) {
       traced[source]        = true;
-      Neighbors s_neighbors = g->neighbors[i];
+      Neighbors s_neighbors = g->neighbors[source];
       for (int j = 0; j < s_neighbors.degree; j ++) {
 	to_check.push(s_neighbors.neighbors[j].q);
 	pred[s_neighbors.neighbors[j].q] = s_neighbors.neighbors[j].weight;
@@ -51,6 +75,8 @@ double* Graph_predict_source_weights_dijkstra(Graph * g,
       traced[i] = false;
     }
   }
+
+  /* Pefrorm BFS to find the weights */
   while(to_check.size() != 0) {
     int curr                 = to_check.front();
     to_check.pop();
@@ -70,6 +96,12 @@ double* Graph_predict_source_weights_dijkstra(Graph * g,
   return pred;
 }
 
+
+/* Function to initialize graph given adjacency matrix and the number of nodes 
+   @param adj_matrix <double **> : Adjacency matrix of the nodes
+   @param no_nodes         <int> : The number of nodes in the network
+   @return g            <Graph*> : A graph structure representing a graph
+*/
 Graph* Graph_init(double ** adj_matrix,
 		  int no_nodes) {
   Graph* g    = new Graph();
@@ -96,6 +128,10 @@ Graph* Graph_init(double ** adj_matrix,
   return g;
 }
 
+/*
+  Function to destroy the graph
+  @param g <Graph*> : Graph structure
+*/
 void Graph_destroy(Graph* g) {
   Neighbors * ns = g->neighbors;
   for(int i = 0; i < g->no_nodes; i ++) {
@@ -107,6 +143,9 @@ void Graph_destroy(Graph* g) {
   return;
 }
 
+/*
+  Structure that stores key and value.
+ */
 struct Entry {
   int key, value;
   Entry() {}
@@ -118,6 +157,9 @@ struct Entry {
   }
 };
 
+/* 
+   Structure that stores an edge (p, q, wt) 
+*/
 struct Edge {
   int p, q;
   double wt;
@@ -150,11 +192,18 @@ struct Edge {
   }
 };
 
+
+/*
+  Function for sorting the Entries
+ */
 bool compare_entries(Entry a,
 		     Entry b) {
   return a.value > b.value; 
 }
 
+
+/*
+ */
 int * vertex_pos(Edge * edges,
 		 int no_nodes,
 		 int no_edges,
