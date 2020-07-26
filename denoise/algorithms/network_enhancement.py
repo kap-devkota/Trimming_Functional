@@ -4,19 +4,19 @@ TODO: Incorporate isolated vertices into
 
 import numpy as np
 from scipy.sparse import diags
-
-"""
-Performs the network enhancement algorithm.
-
-Inputs:
-  - W the the adjacency matrix of the input network of size n x n
-  - k the number of neighbors.
-  - alpha is the regularization parameter.
-  - order determines the extent of diffusion. Typical values are 0.5,1,2.
-Outputs:
-  - An adjacency matrix of the denoised network.
-"""
 def network_enhancement(W, k=20, alpha=0.9, order=2):
+    """
+    Performs the network enhancement algorithm.
+
+    Inputs:
+    - W the the adjacency matrix of the input network of size n x n
+    - k the number of neighbors.
+    - alpha is the regularization parameter.
+    - order determines the extent of diffusion. Typical values are 0.5,1,2.
+    Outputs:
+    - An adjacency matrix of the denoised network.
+    """
+
     # TODO: Maybe remove nodes with no neighbors? No edges to denoise.
     DD = np.sum(W, axis=0)
     W = transition_matrix(W)
