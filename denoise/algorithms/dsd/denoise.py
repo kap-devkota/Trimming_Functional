@@ -163,11 +163,7 @@ def glide_predict_links(edgelist, X, params={}):
     """
     edgedict      = create_edge_dict(edgelist)
     ndict         = create_neighborhood_dict(edgelist)
-<<<<<<< HEAD
     params_        = {}
-=======
-    params_ = {}
->>>>>>> 74b4f7f9df6df55835a544d1265d87cc14bc64a9
         
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
@@ -185,15 +181,9 @@ def glide_predict_links(edgelist, X, params={}):
         A         = densify(edgelist)
         L3        = compute_l3_weighted_mat(A)
         params_["l3"] = L3
-<<<<<<< HEAD
         local_metric  = compute_l3_score_mat  
     elif local_metric == "cw":
         local_metric = compute_cw_score
-=======
-        local_metric  = compute_l3_score_mat
-    elif local_metric == "cw":
-        local_metric  = compute_cw_score
->>>>>>> 74b4f7f9df6df55835a544d1265d87cc14bc64a9
     elif local_metric == "cw_normalized":
         params_["deg"]  = compute_degree_vec(edgelist)
         local_metric    = compute_cw_score_normalized
