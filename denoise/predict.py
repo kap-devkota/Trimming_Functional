@@ -2,6 +2,8 @@ import itertools
 import multiprocessing as mp
 import numpy as np
 from collections import defaultdict
+from sklearn.svm import SVC
+
 
 def vote(voters, labels_f, weight_f):
     """
@@ -103,3 +105,29 @@ def knn(distances, labels_f, k, default_label="????"):
 
     return predicted_labels
            
+def svm(embedding, labels_f, inv_labels_f = lambda x: x, default_label = "????"):
+    """
+    Performs SVM classification
+    labels_f: returns a class label
+    """    
+    clf = SVC(gamma = "auto")
+    n = embedding.shape[0]
+    training = []
+    testing  = []
+    labels   = []
+    for i in range(n):
+        l        = labels_f(i) 
+        if l:
+            training.append(i)
+        else:
+            testing.append(i)
+        labels.append(l)
+    clf.fit(embedding[training], np.array(labels[training]))
+    predictions = clf.predict(embedding[testing])
+    for i, t in enumerate(testing):
+        labels[t] = predictions[i]
+    return {i : inv_labels_f(j) for i, j in enumerate(labels)}
+        
+
+
+

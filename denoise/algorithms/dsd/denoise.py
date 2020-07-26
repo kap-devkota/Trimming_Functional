@@ -18,6 +18,7 @@ def rank_edges(edgelist, X):
         _norm    = norm(X[p] - X[q])
         best_known_list.append((p, q, wt, _norm))
     return sorted(best_known_list, key = lambda l : l[3])
+
     
 def predict_links(X, metric="euclidean"):
     """Predicts the most likely links in a graph given an embedding X
@@ -287,12 +288,7 @@ def glide_predict_links(edgelist, X, params={}):
     
     edgedict      = create_edge_dict(edgelist)
     ndict         = create_neighborhood_dict(edgelist)
-    params_ = None
-    if "ctypes_on" in params:
-        params_        = convert_to_ctypes_suitable(edgedict, ndict)
-        params_["lib"] = ctypes.CDLL(params["so_location"])   
-    else:
-        params_        = {}
+    params_        = {}
         
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
@@ -312,16 +308,8 @@ def glide_predict_links(edgelist, X, params={}):
         L3        = compute_l3_weighted_mat(A)
         params_["l3"] = L3
         local_metric  = compute_l3_score_mat  
-    elif local_metric == "l3":
-        if "ctypes_on" in params:
-            local_metric = compute_l3_score_ctypes
-        else:
-            local_metric = compute_l3_score
     elif local_metric == "cw":
-        if "ctypes_on" in params:
-            local_metric = compute_cw_score_ctypes
-        else:
-            local_metric = compute_cw_score
+        local_metric = compute_cw_score
     elif local_metric == "cw_normalized":
         params_["deg"]  = compute_degree_vec(edgelist)
         local_metric    = compute_cw_score_normalized
