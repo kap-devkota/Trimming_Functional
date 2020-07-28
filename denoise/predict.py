@@ -127,6 +127,69 @@ def svm(embedding, labels_f, inv_labels_f = lambda x: x, default_label = "????")
         labels[t] = predictions[i]
     return {i : inv_labels_f(j) for i, j in enumerate(labels)}
         
+def perform_binary_svc(E, labels, params = {}):
+    """
+    Perform binary svc on embedding and return the new labels
+    @param E: Embedding of size n x k
+    @param labels: A dictionary that maps the index in the row of embedding to labels. An index can have many labels
+    @param params:
+    @return labels: Since the dictionary labels is incomplete (some of the indices donot have any labels associated with it), this function performs SVC for each labels and completels the labels dictionary, and returns it.
+    """
+    def convert_labels_to_dict(lls):
+        l_dct = {}
+        for k in lls:
+            ll       = lls[k]
+            l_dct[k] = {i: True for i in ll}
+        return l_dct
+            
+    all_labels = [i for m in labels for i in labels[m]]
+    labels_dct = convert_labels_to_dict(labels)
+    samples    = {}
+    n          = E.shape[0]
 
+    # Adding Positive samples
+    for i in labels:
+        lls = labels[i]
+        for ll in lls:
+            if ll not in samples:
+                samples[ll] = {"positive" : [], "negative" : [], "null" : [], "clf": None}
+                samples["clf"] = SVC(gamma = "auto")
+            samples[ll]["positive"].append(i)
 
+    # Adding Negative or null samples
+    for i in range(n):
+        if i not in labels:
+            for j in samples:
+                samples[j]["null"].append(i)
+        else:
+            for j in samples:
+                if j not in labels_dct[i]:
+                    samples[j]["negative"].append(i)
+                    
+    # Balance negative and positive samples
+    # Run Binary classifier on each samples
+    # Return the updated label
+    for s in samples:
+        n_pos = len(samples[s]["positive"])
+        n_neg = len(samples[s]["negative"])
+        n_val = n_pos if n_pos < n_neg else n_neg
+        samples[s]["positive"] = np.array(samples[s]["positive"][:n_val])
+        samples[s]["negative"] = np.array(samples[s]["negative"][:n_val])
+        samples[s]["null"]     = np.array(samples[s]["null"])
+        
+        lbls                   = np.zeros((2 * n_val, ))
+        lbls[:n_val]           = 1
+        inputs                 = np.concatenate([samples[s]["positive"],
+                                                 samples[s]["negative"]])
+        samples[s]["clf"].fit(E[inputs], lbls)
+        tst_lbls               = samples[s]["clf"].predict(E[samples[s]["null"]])
+        for n_lab, lab in tst_lbls:
+            if lab == 1:
+                e_id           = samples[s]["null"][n_lab]
+                if e_id not in labels:
+                    labels[e_id] = [s]
+                else:
+                    labels[e_id].append(s)
 
+    return labels
+                    
