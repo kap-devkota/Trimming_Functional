@@ -153,43 +153,53 @@ def perform_binary_svc(E, labels, params = {}):
         for ll in lls:
             if ll not in samples:
                 samples[ll] = {"positive" : [], "negative" : [], "null" : [], "clf": None}
-                samples["clf"] = SVC(gamma = "auto")
+                samples[ll]["clf"] = SVC(gamma = "auto", probability=True)
             samples[ll]["positive"].append(i)
 
-    # Adding Negative or null samples
+    # Adding Negative samples and creating null set (unlabeled data)
+    null_set = []
     for i in range(n):
         if i not in labels:
-            for j in samples:
-                samples[j]["null"].append(i)
+            null_set.append(i)
         else:
             for j in samples:
                 if j not in labels_dct[i]:
                     samples[j]["negative"].append(i)
-                    
+    null_set = np.array(null_set)
+    
     # Balance negative and positive samples
-    # Run Binary classifier on each samples
-    # Return the updated label
+    # and train the probabilistic SVMs
     for s in samples:
         n_pos = len(samples[s]["positive"])
         n_neg = len(samples[s]["negative"])
         n_val = n_pos if n_pos < n_neg else n_neg
         samples[s]["positive"] = np.array(samples[s]["positive"][:n_val])
         samples[s]["negative"] = np.array(samples[s]["negative"][:n_val])
-        samples[s]["null"]     = np.array(samples[s]["null"])
         
         lbls                   = np.zeros((2 * n_val, ))
         lbls[:n_val]           = 1
         inputs                 = np.concatenate([samples[s]["positive"],
                                                  samples[s]["negative"]])
         samples[s]["clf"].fit(E[inputs], lbls)
-        tst_lbls               = samples[s]["clf"].predict(E[samples[s]["null"]])
-        for n_lab, lab in tst_lbls:
-            if lab == 1:
-                e_id           = samples[s]["null"][n_lab]
-                if e_id not in labels:
-                    labels[e_id] = [s]
-                else:
-                    labels[e_id].append(s)
+    
+    # iterate over the classes computing the probability for each point in
+    # the null set for each class
+    probabilities = np.zeros(( len(null_set), len(samples) ))
+    sample_keys = list(samples.keys())
+    for i, s in enumerate(sample_keys):
+        # predict_proba returns a matrix, each row is the prediction for a datapoint
+        # and each column is for a different class. col 0 is negative, col 1 is positive
+        probabilities[:,i] = samples[s]["clf"].predict_proba(E[null_set])[:,1]
+    
+    # predict the highest probability class
+    predictions = np.argmax(probabilities, axis=1)
+    for i in range(len(null_set)):
+        s = predictions[i]
+        e_id = null_set[i]
+        if e_id not in labels:
+            labels[e_id] = [sample_keys[s]]
+        else:
+            labels[e_id].append(sample_keys[s])
 
     return labels
                     
