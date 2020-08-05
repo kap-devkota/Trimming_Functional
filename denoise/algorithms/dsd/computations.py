@@ -1,5 +1,6 @@
 import numpy as np
 from denoise.graph.operations import densify
+from numpy import linalg as LA
 
 def compute_degree_mat(A):
     e = np.ones((A.shape[0], 1))
@@ -73,3 +74,18 @@ def compute_embedding(edge_list, lm = 1):
     X     = compute_X_normalized(A, D, lm = lm)
     return X
 
+
+def compute_reduced_X_embedding(A, D, dims = 50):
+    n            = A.shape[0]
+    D_p          = np.sqrt(D)
+    D_n          = np.sqrt(compute_pinverse_diagonal(D))
+    N            = np.matmul(np.matmul(D_n, A), D_n)
+    L            = np.identity(n) - N
+    spec, X_spec = LA.eig(L + np.identity(n))
+    index_chosen = np.argsort(spec)[1 : dims + 1]
+    spec_mat     = spec[index_chosen] - 1
+    spec_mat     = np.diag(spec_mat)
+    X_spec_r     = X_spec[:, index_chosen]
+    X_spec_r     = np.matmul(D_n, X_spec_r)
+    reduced_mat  = np.matmul(X_spec_r, spec_mat)
+    return reduced_mat

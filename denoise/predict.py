@@ -126,7 +126,9 @@ def svm(embedding, labels_f, inv_labels_f = lambda x: x, default_label = "????")
     for i, t in enumerate(testing):
         labels[t] = predictions[i]
     return {i : inv_labels_f(j) for i, j in enumerate(labels)}
-        
+
+
+
 def perform_binary_svc(E, labels, params = {}):
     """
     Perform binary svc on embedding and return the new labels
@@ -136,13 +138,16 @@ def perform_binary_svc(E, labels, params = {}):
     @return labels: Since the dictionary labels is incomplete (some of the indices donot have any labels associated with it), this function performs SVC for each labels and completels the labels dictionary, and returns it.
     """
     def convert_labels_to_dict(lls):
+        """
+        This function takes in a list of labels associated with a protein embedding, and returns the dictionary that is keyed 
+        by the index of protein embedding with the value 
+        """
         l_dct = {}
         for k in lls:
             ll       = lls[k]
             l_dct[k] = {i: True for i in ll}
         return l_dct
-            
-    all_labels = [i for m in labels for i in labels[m]]
+
     labels_dct = convert_labels_to_dict(labels)
     samples    = {}
     n          = E.shape[0]
@@ -175,7 +180,6 @@ def perform_binary_svc(E, labels, params = {}):
         n_val = n_pos if n_pos < n_neg else n_neg
         samples[s]["positive"] = np.array(samples[s]["positive"][:n_val])
         samples[s]["negative"] = np.array(samples[s]["negative"][:n_val])
-        
         lbls                   = np.zeros((2 * n_val, ))
         lbls[:n_val]           = 1
         inputs                 = np.concatenate([samples[s]["positive"],
