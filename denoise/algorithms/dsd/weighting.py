@@ -152,7 +152,7 @@ def dijkstra_reweight(new_edges, A_mat):
     """
     e_inv_f  = np.vectorize(lambda l : 0.0 if l == 0.0 else 1.0 / l)
     A_mat_i  = e_inv_f(A_mat)
-    G        = nx.from_numpy_matrix(A)
+    G        = nx.from_numpy_matrix(A_mat_i)
     r_d      = nx.floyd_warshall(G)
     ret_list = []
     for e in new_edges:
