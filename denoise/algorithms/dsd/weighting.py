@@ -1,3 +1,6 @@
+import networkx as nx
+import numpy as np
+
 def constant_reweight(new_edges, params):
     """
     Takes in a list of `new_edges` of elements `(p, q, wt)` and returns 
@@ -142,3 +145,18 @@ def inverse_reweight(new_edges, params):
         count   += 1
     return ret_list        
 
+
+def dijkstra_reweight(new_edges, A_mat):
+    """
+    Function that performs dijkstra reweighting.
+    """
+    e_inv_f  = np.vectorize(lambda l : 0.0 if l == 0.0 else 1.0 / l)
+    A_mat_i  = e_inv_f(A_mat)
+    G        = nx.from_numpy_matrix(A)
+    r_d      = nx.floyd_warshall(G)
+    ret_list = []
+    for e in new_edges:
+        p, q, _ = ed
+        wt      = 1 / (r_d[p][q])
+        ret_list.append((p, q, wt))
+    return ret_list
