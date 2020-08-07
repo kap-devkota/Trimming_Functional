@@ -371,3 +371,17 @@ def convert_to_adjacency_dict(edge_connections):
 def compute_graph_distances(edge_connections):
     adjdict = convert_to_adjacency_dict(edge_connections)
     return compute_graph_separation_dict(adjdict)
+
+
+def compute_shortest_paths(edgelist):
+    """ 
+    """
+    G               = nx.Graph()
+    G.add_weighted_edges_from(edgelist)
+    predecessors, _ = nx.floyd_warshall_predecessor_and_distance(G)
+    n_nodes         = len(G)
+    p_matrix        = np.zeros((n_nodes, n_nodes), dtype = np.int)
+    for src in predecessors:
+        for intr in predecessors[src]:
+            p_matrix[src, intr] = predecessors[src][intr]
+    return p_matrix
