@@ -72,7 +72,7 @@ def mv(A, labels_f, default_label="????"):
     """
     return wmv(A, labels_f, weight_f=lambda _: 1, default_label=default_label)
 
-def knn(distances, labels_f, k, default_label="????"):
+def knn(distances, labels_f, k, default_label="????", is_weighted=True):
     """Performs k-nearest neighors voting algorithm using the passed in
     distance matrix.
 
@@ -95,7 +95,10 @@ def knn(distances, labels_f, k, default_label="????"):
             continue
 
         voters = np.argsort(distances[i, :])[1:k+1]
-        weight_f = lambda voter: 1 / (distances[voter, i] if distances[voter, i] > 0 else 0.000001)
+        if is_weighted == True:
+            weight_f = lambda voter: 1 / (distances[voter, i] if distances[voter, i] > 0 else 0.000001)
+        else:
+            weight_f = lambda voter: 1            
         prediction = vote(voters, labels_f, weight_f)
         if prediction is not None:
             predicted_labels[i] = prediction
