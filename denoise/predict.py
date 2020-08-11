@@ -131,6 +131,55 @@ def svm(embedding, labels_f, inv_labels_f = lambda x: x, default_label = "????")
     return {i : inv_labels_f(j) for i, j in enumerate(labels)}
 
 
+def jaccard_filter(labels_dct, threshold=0.1):
+    """
+    filters the set of labels so that no two labels have a jacard similarity
+    greater than the threshold
+    @param labels_dct: A dictionary with labels as keys and a list of indices
+        as its values
+    @param threshold: the maximum tolerable similarity
+    @return (used_label, unused_labels): the dict passed in split into used and
+        unused
+    """
+    
+    keys = list(labels_dct.keys())
+    used_labels = {}
+    unused_labels = {}
+
+    i = 0
+    while i  < len(keys):
+        label1 = keys[i]
+        proteins1 = labels_dct[label1]
+        pro1 = set(proteins1) # used for set intersection and union below
+        
+        # if we see it here then there is nothing similar to it that we've seen
+        # before, and the inner loop removes the similar things coming after
+        used_labels[label1] = proteins1
+        
+        # update the indices 
+        j = i + 1
+        while j < len(keys):
+            label2 = keys[j]
+            proteins2 = labels_dct[label2]
+            pro2 = set(proteins2)
+            
+            # compute the jacard index as |inter| / |union|
+            jaccard = len(pro1.intersection(pro2)) / len(pro1.union(pro2))
+            if jaccard > threshold:
+                # too similar to label1 so we cull it
+                unused_labels[label2] = proteins2
+
+                # trim out this index for speed-up (note don't increment j)
+                keys.pop(j)
+            else:
+                # using while so we need to manually increment
+                j += 1
+
+        # using while so we need to manually increment
+        i += 1
+    
+    return (used_labels, unused_labels)
+
 
 def perform_binary_svc(E, labels, params = {}):
     """
@@ -152,6 +201,24 @@ def perform_binary_svc(E, labels, params = {}):
         return l_dct
 
     labels_dct = convert_labels_to_dict(labels)
+    
+    def transpose_labels(labels):
+        """
+        Returns a dict with go labels as keys with values being a list of 
+        proteins with that label
+        """
+        transpose = {}
+        for protein in labels:
+            lls = labels[protein]
+            for ll in lls:
+                if not ll in transpose:
+                    transpose[ll] = []
+                transpose[ll].append(protein)
+        return transpose
+
+    # perform a filter on the label classes we are going to use
+    [used_labels, unused_labels] = jaccard_filter(transpose_labels(labels), 0.1)
+
     samples    = {}
     n          = E.shape[0]
 
@@ -159,6 +226,9 @@ def perform_binary_svc(E, labels, params = {}):
     for i in labels:
         lls = labels[i]
         for ll in lls:
+            # ignore the labels that we aren't considering
+            if ll not in used_labels:
+                continue
             if ll not in samples:
                 samples[ll] = {"positive" : [], "negative" : [], "null" : [], "clf": None}
                 samples[ll]["clf"] = SVC(gamma = "auto", probability=True)
@@ -174,7 +244,7 @@ def perform_binary_svc(E, labels, params = {}):
                 if j not in labels_dct[i]:
                     samples[j]["negative"].append(i)
     null_set = np.array(null_set)
-    
+
     # Balance negative and positive samples
     # and train the probabilistic SVMs
     for s in samples:
