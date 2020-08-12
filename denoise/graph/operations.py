@@ -1,7 +1,8 @@
 import numpy as np
 import json
+import networkx as nx
 
-def sparsify(A, directed = False):
+def sparsify(A, directed = False, node_map = None):
     """Given an adjacency matrix as a numpy matrix, returns the
     sparsified form of the matrix (or adjacency list).
     """
@@ -19,8 +20,16 @@ def sparsify(A, directed = False):
             if directed:
                 if A[j, i] != 0:
                     edgelist.append((j, i, A[j, i]))
-    
-    return edgelist, dim
+    if node_map is not None:
+        r_node_map = {}
+        for k in node_map:
+            r_node_map[node_map[k]] = k
+        a_edgelist = []
+        for (p, q, w) in edgelist:
+            a_edgelist.append(r_node_map[p], r_node_map[q], w)
+        return a_edgelist, dim
+    else:
+        return edgelist, dim
 
 def densify(edgelist, dim = None, directed = False):
     """Given an adjacency list for the graph, computes the adjacency
