@@ -68,10 +68,10 @@ def compute_sim_matrix(embedding_mat, meth="rbf", params = None):
 
 # TODO: This function feels out of place. It doesn't do anything
 # interesting and clutters the codebase.
-def compute_embedding(edge_list, lm = 1):
+def compute_embedding(edge_list, lm = 1, is_normalized = True):
     A     = densify(edge_list)
     D     = compute_degree_mat(A)
-    X     = compute_X_normalized(A, D, lm = lm)
+    X     = compute_X_normalized(A, D, lm = lm, is_normalized = is_normalized)
     return X
 
 
