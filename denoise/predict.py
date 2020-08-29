@@ -218,7 +218,7 @@ def perform_binary_svc(E, labels, params = {}):
 
     # perform a filter on the label classes we are going to use
     [used_labels, unused_labels] = jaccard_filter(transpose_labels(labels), 0.1)
-
+    print(f"The number of Used Labels {len(used_labels)}")
     samples    = {}
     n          = E.shape[0]
 
