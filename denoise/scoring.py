@@ -15,7 +15,7 @@ def score_cv(test_nodes, test_labelling, real_labelling):
         if test_label in real_labelling[node]:
             correct += 1
         total += 1
-
+    print(f"Correct :{correct}")
     return float(correct) / float(total)
 
 def kfoldcv(k, labels, prediction_algorithm, randomized=False):

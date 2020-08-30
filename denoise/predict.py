@@ -100,6 +100,7 @@ def knn(distances, labels_f, k, default_label="????", is_weighted=True):
         else:
             weight_f = lambda voter: 1            
         prediction = vote(voters, labels_f, weight_f)
+        print(f"Node : {i}\t Neighbors : {voters}\t Prediction : {prediction}")
         if prediction is not None:
             predicted_labels[i] = prediction
         else:
@@ -181,6 +182,59 @@ def jaccard_filter(labels_dct, threshold=0.1):
     return (used_labels, unused_labels)
 
 
+def jaccard_filter_added_unused(labels_dct, threshold=0.1):
+    """
+    filters the set of labels so that no two labels have a jacard similarity
+    greater than the threshold
+    @param labels_dct: A dictionary with labels as keys and a list of indices
+        as its values
+    @param threshold: the maximum tolerable similarity
+    @return (used_label, unused_labels): the dict passed in split into used and
+        unused
+    """
+    
+    keys = list(labels_dct.keys())
+    used_labels = {}
+    unused_labels = {}
+
+    i = 0
+    associated_labels = {}
+    while i  < len(keys):
+        label1 = keys[i]
+        associated_labels[label1] = []
+        proteins1 = labels_dct[label1]
+        pro1 = set(proteins1) # used for set intersection and union below
+        
+        # if we see it here then there is nothing similar to it that we've seen
+        # before, and the inner loop removes the similar things coming after
+        used_labels[label1] = proteins1
+        
+        # update the indices 
+        j = i + 1
+        while j < len(keys):
+            label2 = keys[j]
+            proteins2 = labels_dct[label2]
+            pro2 = set(proteins2)
+            
+            # compute the jacard index as |inter| / |union|
+            jaccard = len(pro1.intersection(pro2)) / len(pro1.union(pro2))
+            if jaccard > threshold:
+                # too similar to label1 so we cull it
+                associated_labels[label1].append(label2)
+                used_labels[labels1] += proteins2
+                # trim out this index for speed-up (note don't increment j)
+                keys.pop(j)
+            else:
+                # using while so we need to manually increment
+                j += 1
+
+        # using while so we need to manually increment
+        i += 1
+    
+    return (used_labels, associated_labels)
+
+
+
 def perform_binary_svc(E, labels, params = {}):
     """
     Perform binary svc on embedding and return the new labels
@@ -217,8 +271,10 @@ def perform_binary_svc(E, labels, params = {}):
         return transpose
 
     # perform a filter on the label classes we are going to use
-    [used_labels, unused_labels] = jaccard_filter(transpose_labels(labels), 0.1)
-    print(f"The number of Used Labels {len(used_labels)}")
+    t_labels                     = transpose_labels(labels)
+    # print(f"The number of All the Labels {len(t_labels)}")
+    [used_labels, unused_labels] = jaccard_filter(t_labels, 0.1)
+    # print(f"The number of Used Labels {len(used_labels)}")
     samples    = {}
     n          = E.shape[0]
 
@@ -254,7 +310,7 @@ def perform_binary_svc(E, labels, params = {}):
         samples[s]["positive"] = np.array(samples[s]["positive"][:n_val])
         samples[s]["negative"] = np.array(samples[s]["negative"][:n_val])
         lbls                   = np.zeros((2 * n_val, ))
-        lbls[:n_val]           = 1
+        lbls[:n_pos]           = 1
         inputs                 = np.concatenate([samples[s]["positive"],
                                                  samples[s]["negative"]])
         samples[s]["clf"].fit(E[inputs], lbls)
@@ -267,7 +323,7 @@ def perform_binary_svc(E, labels, params = {}):
         # predict_proba returns a matrix, each row is the prediction for a datapoint
         # and each column is for a different class. col 0 is negative, col 1 is positive
         probabilities[:,i] = samples[s]["clf"].predict_proba(E[null_set])[:,1]
-    
+
     # predict the highest probability class
     predictions = np.argmax(probabilities, axis=1)
     for i in range(len(null_set)):
@@ -275,6 +331,7 @@ def perform_binary_svc(E, labels, params = {}):
         e_id = null_set[i]
         if e_id not in labels:
             labels[e_id] = [sample_keys[s]]
+           #  print(sample_keys[s])
         else:
             labels[e_id].append(sample_keys[s])
 
