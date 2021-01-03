@@ -2,6 +2,7 @@ import itertools
 import numpy as np
 from collections import defaultdict
 from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 
 
 def vote(voters, labels_f, weight_f):
@@ -26,7 +27,7 @@ def vote(voters, labels_f, weight_f):
 
     return max(label_counts.keys(), key=lambda k: label_counts[k])
 
-def wmv(A, labels_f, weight_f=lambda x: x, default_label="????"):
+def wmv(A, labels_f, weight_f=lambda x: x, default_label="????", params = None):
     """
     Weighted majority vote algorithm for an undirected graph.
 
@@ -41,6 +42,13 @@ def wmv(A, labels_f, weight_f=lambda x: x, default_label="????"):
       is already known, the first label in the list is picked.
     """
     predicted_labels = {}
+    
+    filter_type = None
+    if params  != None:
+        filter_type = params["filter_type"]
+        if filter_type == "degree":
+            deg_vec    = params["degree_vec"]
+            max_degree = params["degree_threshold"]            
 
     n = A.shape[0]
     for i in range(n):
@@ -48,7 +56,15 @@ def wmv(A, labels_f, weight_f=lambda x: x, default_label="????"):
         if labels:
             predicted_labels[i] = labels[0]
             continue
-        voters = filter(lambda j: A[i, j] != 0, itertools.chain(range(0, i), range(i + 1, n)))
+        voters_ = filter(lambda j: A[i, j] != 0, itertools.chain(range(0, i), range(i + 1, n)))
+        if filter_type == "degree":
+            voters     = []
+            count      = 0
+            for v in voters_:
+                if deg_vec[v] <= max_degree:
+                    voters.append(v)
+        else:
+            voters = voters_
         prediction = vote(voters, labels_f, lambda voter: weight_f(A[i, voter]))
         if prediction is not None:
             predicted_labels[i] = prediction
@@ -72,7 +88,25 @@ def mv(A, labels_f, default_label="????"):
     """
     return wmv(A, labels_f, weight_f=lambda _: 1, default_label=default_label)
 
-def knn(distances, labels_f, k, default_label="????", is_weighted=True):
+
+def glide(node_association, labels_f, params = None):
+    n = len(node_association)
+    predicted_labels = {}
+    for i in range(n):
+        labels = labels_f(i)
+        if labels:
+            predicted_labels[i] = labels[0]
+            continue
+        voters = [p for p in node_association[i]]
+        weight_f = lambda voter: node_association[i][voter]
+        prediction = vote(voters, labels_f, weight_f)
+        if prediction is not None:
+            predicted_labels[i] = prediction
+        else:
+            predicted_labels[i] = "????"
+    return predicted_labels
+
+def knn(distances, labels_f, k, default_label="????", is_weighted=True, params = None):
     """Performs k-nearest neighors voting algorithm using the passed in
     distance matrix.
 
@@ -86,26 +120,43 @@ def knn(distances, labels_f, k, default_label="????", is_weighted=True):
       - A dictionary mapping node IDs to a label. If the label
       is already known, the first label in the list is picked."""
     predicted_labels = {}
+    filter_type      = None
 
+    if params != None:
+        filter_type = params["filter_type"]
+        if filter_type == "degree":
+            deg_vec    = params["degree_vec"]
+            max_degree = params["degree_threshold"]
+            
+        
     n = distances.shape[0] # number of nodes
     for i in range(n):
         labels = labels_f(i)
         if labels:
             predicted_labels[i] = labels[0]
             continue
+        voters_ = np.argsort(distances[i, :])
+        if filter_type == "degree":
+            voters     = []
+            count      = 0
+            for v in voters_:
+                if deg_vec[v] <= max_degree:
+                    voters.append(v)
+                    count += 1
+                if count >= k:
+                    break
+        else:
+            voters = voters_[1:k+1]
 
-        voters = np.argsort(distances[i, :])[1:k+1]
         if is_weighted == True:
             weight_f = lambda voter: 1 / (distances[voter, i] if distances[voter, i] > 0 else 0.000001)
         else:
             weight_f = lambda voter: 1            
         prediction = vote(voters, labels_f, weight_f)
-        print(f"Node : {i}\t Neighbors : {voters}\t Prediction : {prediction}")
         if prediction is not None:
             predicted_labels[i] = prediction
         else:
             predicted_labels[i] = default_label
-
     return predicted_labels
            
 def svm(embedding, labels_f, inv_labels_f = lambda x: x, default_label = "????"):
@@ -221,7 +272,7 @@ def jaccard_filter_added_unused(labels_dct, threshold=0.1):
             if jaccard > threshold:
                 # too similar to label1 so we cull it
                 associated_labels[label1].append(label2)
-                used_labels[labels1] += proteins2
+                used_labels[label1] += proteins2
                 # trim out this index for speed-up (note don't increment j)
                 keys.pop(j)
             else:
@@ -235,7 +286,7 @@ def jaccard_filter_added_unused(labels_dct, threshold=0.1):
 
 
 
-def perform_binary_svc(E, labels, params = {}):
+def perform_binary_OVA(E, labels, params = {}, clf_type="LR"):
     """
     Perform binary svc on embedding and return the new labels
     @param E: Embedding of size n x k
@@ -245,7 +296,7 @@ def perform_binary_svc(E, labels, params = {}):
     """
     def convert_labels_to_dict(lls):
         """
-        This function takes in a list of labels associated with a protein embedding, and returns the dictionary that is keyed 
+        This function takes in a list of labels associated with a protein embedding, and returns the dictionary that is keyed .
         by the index of protein embedding with the value 
         """
         l_dct = {}
@@ -272,9 +323,14 @@ def perform_binary_svc(E, labels, params = {}):
 
     # perform a filter on the label classes we are going to use
     t_labels                     = transpose_labels(labels)
-    # print(f"The number of All the Labels {len(t_labels)}")
-    [used_labels, unused_labels] = jaccard_filter(t_labels, 0.1)
-    # print(f"The number of Used Labels {len(used_labels)}")
+    print(f"The number of All the Labels {len(t_labels)}")
+
+    """
+    #[used_labels, unused_labels] = jaccard_filter(t_labels, 0.1)
+    [used_labels, assoc_dict]   = jaccard_filter_added_unused(t_labels, threshold=thres)
+    print(f"The number of Used Labels {len(used_labels)}")
+    """
+
     samples    = {}
     n          = E.shape[0]
 
@@ -282,12 +338,17 @@ def perform_binary_svc(E, labels, params = {}):
     for i in labels:
         lls = labels[i]
         for ll in lls:
+            """
             # ignore the labels that we aren't considering
             if ll not in used_labels:
                 continue
+            """
             if ll not in samples:
                 samples[ll] = {"positive" : [], "negative" : [], "null" : [], "clf": None}
-                samples[ll]["clf"] = SVC(gamma = "auto", probability=True)
+                if clf_type != "LR":
+                    samples[ll]["clf"] = SVC(gamma = "auto", probability=True)
+                else:
+                    samples[ll]["clf"] = LogisticRegression(random_state = 0)
             samples[ll]["positive"].append(i)
 
     # Adding Negative samples and creating null set (unlabeled data)
@@ -315,6 +376,7 @@ def perform_binary_svc(E, labels, params = {}):
                                                  samples[s]["negative"]])
         samples[s]["clf"].fit(E[inputs], lbls)
     
+    print("Here")
     # iterate over the classes computing the probability for each point in
     # the null set for each class
     probabilities = np.zeros(( len(null_set), len(samples) ))
@@ -322,6 +384,7 @@ def perform_binary_svc(E, labels, params = {}):
     for i, s in enumerate(sample_keys):
         # predict_proba returns a matrix, each row is the prediction for a datapoint
         # and each column is for a different class. col 0 is negative, col 1 is positive
+        print(i)
         probabilities[:,i] = samples[s]["clf"].predict_proba(E[null_set])[:,1]
 
     # predict the highest probability class
@@ -331,7 +394,10 @@ def perform_binary_svc(E, labels, params = {}):
         e_id = null_set[i]
         if e_id not in labels:
             labels[e_id] = [sample_keys[s]]
-           #  print(sample_keys[s])
+            """
+            for assoc in assoc_dict[sample_keys[s]]:
+                labels[e_id] += [assoc]
+            """
         else:
             labels[e_id].append(sample_keys[s])
 

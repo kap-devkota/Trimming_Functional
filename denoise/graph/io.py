@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 def parse_go_label_file(fname):
     """Parses a GO label file.
@@ -23,7 +24,7 @@ def parse_go_label_file(fname):
 
         return go_to_proteins, proteins_to_go
 
-def parse_graph_file(fname):
+def parse_graph_file(fname, weighted = True, normalize = True):
     """Parses a graph represented as an adjacency list. Works on either
     directed or undirected graphs.
 
@@ -38,9 +39,18 @@ def parse_graph_file(fname):
         counter = 0
         edges = f.readlines()
         for edge in edges:
+            edge = edge.rstrip().lstrip()
+            if edge == "":
+                continue
             edge = edge.split()
-            u, v, weight = edge[0], edge[1], float(edge[2])
-
+            if weighted:
+                u, v, weight = edge[0], edge[1], float(edge[2])
+            else:
+                try:
+                    u, v         = edge[0], edge[1]
+                except:
+                    print(f"{edge}")
+                weight       = 1
             for x in [u, v]:
                 if x not in node_map:
                     node_map[x] = counter
@@ -52,7 +62,16 @@ def parse_graph_file(fname):
         node_list = np.empty(n, dtype=object)
         for name, index in node_map.items():
             node_list[index] = name
-
+        
+        if normalize:
+            mx = edgelist[0][2]
+            for e in edgelist:
+                if mx < e[2]:
+                    mx = e[2]
+            if mx > 1:
+                for i in range(len(edgelist)):
+                    p, q, w = edgelist[i]
+                    edgelist[i] = (p, q, w / mx)
         return edgelist, node_list, node_map
 
 def write_graph_to_file(filename, edgelist, node_map=None):

@@ -168,10 +168,18 @@ def glide_predict_links(edgelist, X, params={}):
     # Embedding
     pairwise_dist = spatial.squareform(spatial.pdist(X))
     N             = X.shape[0]
-    alpha         = params["alpha"]
+
+    # Choose Scoring Method
+    if "method" not in params or params["method"] == "sum":
+        method        = "sum"
+        alpha         = params["alpha"]
+        beta          = params["beta"]
+        delta         = params["delta"]
+    elif params["method"] == "prod":
+        method        = "prod"
+        p_delta       = params["delta"] if "delta" in params else 0.1
+
     local_metric  = params["loc"]
-    beta          = params["beta"]
-    delta         = params["delta"]
     if local_metric == "l3_u" or local_metric == "l3":
         A         = densify(edgelist)
         L3        = compute_l3_unweighted_mat(A)
@@ -195,8 +203,11 @@ def glide_predict_links(edgelist, X, params={}):
         for j in range(i):
             local_score = local_metric(i, j, edgedict, ndict, params_)
             dsed_dist   = pairwise_dist[i, j]
-            glide_score = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
-                                + delta * 1 / dsed_dist)
+            if method  == "sum":
+                glide_score = (np.exp(alpha / (1 + beta * dsed_dist)) * local_score
+                               + delta * 1 / dsed_dist)
+            elif method == "prod":
+                glide_score = (p_delta + local_metric(i, j, edgedict, ndict, params_)) / dsed_dist
             edgelist_with_scores.append((i, j, glide_score))
     return sorted(edgelist_with_scores, key = lambda l : l[2], reverse = True)    
     
